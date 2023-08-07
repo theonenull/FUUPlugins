@@ -2,10 +2,16 @@
 <project version="4">
   <component name="deploymentTargetDropDown">
     <value>
+      <entry key="ClassCardPreview">
+        <State />
+      </entry>
       <entry key="MainActivityUiPreview">
         <State />
       </entry>
       <entry key="MainFrameworkPreview">
+        <State />
+      </entry>
+      <entry key="SidebarPreview">
         <State />
       </entry>
       <entry key="app">

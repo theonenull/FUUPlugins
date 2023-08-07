@@ -103,7 +103,9 @@ fun MainFramework(){
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
-                    )
+                    ){
+                        ClassSchedule()
+                    }
                     NavigationBar {
                         ListOfPages.forEachIndexed { index, item ->
                             NavigationBarItem(
