@@ -50,7 +50,7 @@ import dev.jeziellago.compose.markdowntext.MarkdownText
 
 @Composable
 fun StartPage(
-
+    
 ) {
 
 }

@@ -44,35 +44,6 @@ fun MainActivityUiPreview(){
     MainActivityUi()
 }
 
-@Composable
-fun MainFramework(){
-    var selectedItem by remember { mutableStateOf(0) }
-    val items = listOf("Songs", "Artists", "Playlists")
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        BackHandler {
-
-        }
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-        )
-        NavigationBar {
-            items.forEachIndexed { index, item ->
-                NavigationBarItem(
-                    icon = { Icon(Icons.Filled.Favorite, contentDescription = item) },
-                    label = { Text(item) },
-                    selected = selectedItem == index,
-                    onClick = { selectedItem = index }
-                )
-            }
-        }
-    }
-
-}
 
 
 
