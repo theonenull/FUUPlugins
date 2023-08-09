@@ -1,9 +1,11 @@
 package com.example.fuuplugins.activity.mainActivity.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,6 +18,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,6 +43,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -64,20 +68,7 @@ fun MainFramework(){
             drawerState = drawerState,
             gesturesEnabled = gesturesEnabled,
             drawerContent  = {
-                PermanentDrawerSheet(Modifier.width(300.dp)) {
-                    Spacer(Modifier.height(12.dp))
-                    iconItems.forEach { item ->
-                        NavigationDrawerItem(
-                            icon = { Icon(item, contentDescription = null) },
-                            label = { Text(item.name) },
-                            selected = item == iconSelectedItem.value,
-                            onClick = {
-                                iconSelectedItem.value = item
-                            },
-                            modifier = Modifier.padding(horizontal = 12.dp)
-                        )
-                    }
-                }
+                PersonPage()
             },
             content = {
                 var selectedItem by remember { mutableStateOf(0) }
@@ -96,6 +87,13 @@ fun MainFramework(){
                                 }
                             }) {
                                 Icon(imageVector = Icons.Filled.AccountCircle, contentDescription = null)
+                            }
+                            IconButton(onClick = {
+                                mainFrameworkScope.launch {
+                                    drawerState.open()
+                                }
+                            }) {
+                                Icon(imageVector = Icons.Filled.Refresh, contentDescription = null)
                             }
                         }
                     )

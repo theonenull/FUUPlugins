@@ -121,7 +121,7 @@ fun ClassSchedulePreview(){
 fun ClassCard(){
     Column (
         modifier = Modifier
-            .height(150.dp)
+            .height(75.dp)
             .fillMaxWidth()
             .background(Color.Transparent)
             .padding(vertical = 2.dp, horizontal = 2.dp)
@@ -160,7 +160,7 @@ fun ClassCard(){
 fun EmptyClassCard(){
     Column (
         modifier = Modifier
-            .height(150.dp)
+            .height(75.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(5.dp))
             .background(Color.Transparent)
