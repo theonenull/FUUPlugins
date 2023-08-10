@@ -117,6 +117,8 @@ fun ClassSchedule(){
 fun ClassSchedulePreview(){
     ClassSchedule()
 }
+
+
 @Composable
 fun ClassCard(){
     Column (
