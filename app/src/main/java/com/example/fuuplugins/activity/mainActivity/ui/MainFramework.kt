@@ -1,6 +1,19 @@
 package com.example.fuuplugins.activity.mainActivity.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.with
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,7 +61,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun MainFramework(){
     Column(
@@ -102,7 +115,41 @@ fun MainFramework(){
                             .weight(1f)
                             .fillMaxWidth()
                     ){
-                        ClassSchedule()
+                        AnimatedContent(
+                            targetState = selectedItem,
+                            label = "",
+                            modifier = Modifier,
+                            transitionSpec = {
+                                // Compare the incoming number with the previous number.
+                                if (targetState > initialState) {
+                                    // If the target number is larger, it slides up and fades in
+                                    // while the initial (smaller) number slides up and fades out.
+                                    slideInHorizontally { width -> width } + fadeIn() with
+                                            slideOutHorizontally { width -> -width } + fadeOut()
+                                } else {
+                                    // If the target number is smaller, it slides down and fades in
+                                    // while the initial number slides down and fades out.
+                                    slideInHorizontally { width -> -width } + fadeIn() with
+                                            slideOutHorizontally { width -> width } + fadeOut()
+                                }.using(
+                                    // Disable clipping since the faded slide-in/out should
+                                    // be displayed out of bounds.
+                                    SizeTransform(clip = false)
+                                )
+                            }
+                        ) {
+                            when (it){
+                                0 -> {
+                                    ClassSchedule()
+                                }
+                                1 -> {
+                                    PluginTool()
+                                }
+                                2 -> {
+                                    PluginsStore()
+                                }
+                            }
+                        }
                     }
                     NavigationBar {
                         ListOfPages.forEachIndexed { index, item ->
@@ -113,7 +160,7 @@ fun MainFramework(){
                                         1 -> Icon(Icons.Filled.Share, contentDescription = item)
                                         2 -> Icon(Icons.Filled.Favorite, contentDescription = item)
                                     }
-                                       },
+                                },
                                 label = { Text(item) },
                                 selected = selectedItem == index,
                                 onClick = { selectedItem = index }

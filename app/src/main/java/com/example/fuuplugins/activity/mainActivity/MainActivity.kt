@@ -10,14 +10,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.fuuplugins.activity.BaseActivity
+import com.example.fuuplugins.activity.mainActivity.ui.MainFramework
 import com.example.fuuplugins.ui.theme.FUUPluginsTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             FUUPluginsTheme {
-
+                MainFramework()
             }
         }
     }

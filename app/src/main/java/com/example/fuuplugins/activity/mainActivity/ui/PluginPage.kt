@@ -169,7 +169,7 @@ fun PluginAlreadyDownloaded(){
         Column (
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 10.dp, vertical = 20.dp),
+                .padding(horizontal = 10.dp, vertical = 10.dp),
         ){
             Carousel(
                 modifier = Modifier
@@ -274,6 +274,9 @@ fun PluginDialog(
                             .fillMaxHeight(0.7f)
                             .aspectRatio(1f)
                             .clip(RoundedCornerShape(100))
+                            .background(Color.Gray)
+                            .clickable { onDismissRequest.invoke() }
+                            .padding(5.dp)
                             .align(Alignment.CenterVertically),
                         contentScale = ContentScale.FillBounds
                     )

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -278,7 +279,7 @@ fun PoopRaft(){
                     .padding(bottom = 10.dp, end = 10.dp)
             )
             Text(
-                text = "这是一条信息这是一条信息这是一条信息这是一条信息这是一条信息这是一条信息"
+                text = "这是一条信息 这是一条信息 这是一条信息 这是一条信息 这是一条信息 这是一条信息"
             )
         }
         Box(
@@ -465,5 +466,6 @@ enum class RibbonButton(
 ){
     Setting(Icons.Filled.Settings,"设置" ),
     HelpAndFeedback(Icons.Filled.Edit,"帮助与反馈"),
+    AboutUs(Icons.Filled.Person,"关于我们"),
     SignOut(Icons.Filled.ExitToApp,"退出登录", containerColor = Color(248, 69, 69, 255), contentColor = Color.Black)
 }
