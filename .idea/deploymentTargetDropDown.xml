@@ -2,19 +2,19 @@
 <project version="4">
   <component name="deploymentTargetDropDown">
     <value>
-      <entry key="LoginPagePreview">
-        <State />
-      </entry>
       <entry key="MainFrameworkPreview">
         <State />
       </entry>
       <entry key="PersonPage">
         <State />
       </entry>
-      <entry key="ProfileArea">
+      <entry key="PluginDetail">
         <State />
       </entry>
-      <entry key="SidebarPreview">
+      <entry key="PluginIntroductionList">
+        <State />
+      </entry>
+      <entry key="PluginsStore">
         <State />
       </entry>
       <entry key="app">

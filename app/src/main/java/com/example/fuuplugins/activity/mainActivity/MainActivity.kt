@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.fuuplugins.activity.BaseActivity
+import com.example.fuuplugins.activity.mainActivity.ui.MainActivityUi
 import com.example.fuuplugins.activity.mainActivity.ui.MainFramework
 import com.example.fuuplugins.ui.theme.FUUPluginsTheme
 
@@ -19,7 +20,7 @@ class MainActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             FUUPluginsTheme {
-                MainFramework()
+                MainActivityUi()
             }
         }
     }

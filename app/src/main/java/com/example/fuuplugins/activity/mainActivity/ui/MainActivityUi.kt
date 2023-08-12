@@ -30,7 +30,14 @@ fun MainActivityUi(
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "startPage") {
         composable("startPage") {
-            StartPage()
+            StartPage(){
+                navController.navigate("login"){
+                    popUpTo("startPage") { inclusive = true }
+                }
+            }
+        }
+        composable("login") {
+            LoginPage()
         }
         composable("mainFramework") {
             MainFramework()

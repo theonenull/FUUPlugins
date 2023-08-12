@@ -28,13 +28,17 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -73,9 +77,26 @@ import kotlin.random.Random
 
 @Composable
 fun StartPage(
-    
+    onclick:()->Unit
 ) {
-
+    val scope = rememberCoroutineScope()
+    DisposableEffect(Unit){
+        val timer = Timer()
+        val task = object : TimerTask() {
+            override fun run() {
+                scope.launch {
+                    onclick.invoke()
+                }
+            }
+        }
+        timer.schedule(task, 5000, 5000)
+        onDispose {
+            task.cancel()
+        }
+    }
+    Markdown(){
+        onclick.invoke()
+    }
 }
 
 @Composable
@@ -136,24 +157,35 @@ fun Markdown(
         ![Image](https://picx.zhimg.com/80/v2-34a2b85cc01eb4991cb4154b8b5a3dac_720w.webp?source=1940ef5c)  
     
     <a href="https://www.google.com/">Google</a>  
-""".trimIndent()
+""".trimIndent(),
+    onclick: () -> Unit
 ){
     Box(modifier = Modifier
         .fillMaxSize()
     ){
-        MarkdownText(
+        Column (
             modifier = Modifier
-                .fillMaxSize(),
-            markdown = markdownContent
-        )
-        FloatingActionButton(
-            onClick = { /*TODO*/ },
-            modifier = Modifier
-                .offset(x = (-10).dp, y = (-10).dp)
-                .align(Alignment.BottomEnd),
-        ) {
-            Image(imageVector = Icons.Filled.KeyboardArrowRight, contentDescription = null)
+                .padding(10.dp)
+                .verticalScroll(rememberScrollState())
+        ){
+            MarkdownText(
+                modifier = Modifier
+                    .fillMaxSize(),
+                markdown = markdownContent
+            )
         }
+        ExtendedFloatingActionButton(
+            onClick = onclick,
+            modifier = Modifier
+                .offset(x = (-10).dp, y = (-20).dp)
+                .align(Alignment.BottomEnd),
+            icon = {
+                Icon(imageVector = Icons.Filled.KeyboardArrowRight, contentDescription = null)
+            },
+            text = {
+                Text(text = "跳过")
+            }
+        )
     }
 
 }
@@ -161,8 +193,9 @@ fun Markdown(
 @Composable
 @Preview
 fun MarkDownPreview(){
-    Markdown()
+    Markdown(){
 
+    }
 }
 
 

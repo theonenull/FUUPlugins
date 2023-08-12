@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -68,18 +69,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import kotlin.random.Random
+import kotlin.random.nextInt
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ClassSchedule(){
-    val gridState = rememberLazyGridState()
+
     val sidebarSlideState = rememberScrollState()
-    val index by remember {
-        derivedStateOf { gridState.firstVisibleItemIndex }
-    }
-    LaunchedEffect(index){
-        sidebarSlideState.animateScrollTo(index)
-    }
+
     Column {
         TimeOfWeekColumn()
         Row (
@@ -100,12 +98,22 @@ fun ClassSchedule(){
                     .weight(1f)
                     .fillMaxHeight()
             ) {
-                Box(
-                    Modifier.fillMaxSize()
-                ) {
-                    CourseGrid(
-
-                    )
+                Row (
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(sidebarSlideState)
+                ){
+                    WeekDay.values().forEach { _ ->
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .requiredHeight((11*75).dp)
+                        ) {
+                            repeat(Random.nextInt(0..11)){
+                                ClassCard()
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -195,7 +203,7 @@ fun Sidebar(
         (1..11).forEachIndexed { _, item ->
             Box(
                 modifier = Modifier
-                    .height(150.dp)
+                    .height(75.dp)
                     .wrapContentWidth(Alignment.CenterHorizontally)
             ) {
                 Text(
@@ -203,9 +211,9 @@ fun Sidebar(
                     modifier = Modifier
                         .align(Alignment.Center)
                         .fillMaxWidth()
-                        .wrapContentHeight()
-                        .padding(horizontal = 1.dp),
-                    textAlign = TextAlign.Center
+                        .wrapContentHeight(),
+                    textAlign = TextAlign.Center,
+                    fontSize = 10.sp
                 )
             }
         }
@@ -372,7 +380,6 @@ fun TimeOfWeekColumn(){
         horizontalArrangement = Arrangement.Center
     ) {
         Spacer(modifier = Modifier.width(20.dp))
-
         WeekDay.values().forEach { item ->
             Text(
                 text = item.chineseName,
