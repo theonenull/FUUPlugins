@@ -79,4 +79,17 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:$nav_version")
     implementation("androidx.palette:palette:1.0.0")
     implementation("com.github.jeziellago:compose-markdown:0.3.4")
+    implementation("io.coil-kt:coil-compose:2.4.0")
+    // network
+
+
+    // network
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.9.0")
+    implementation("com.squareup.okio:okio:2.10.0")
+//
+//
+//    debugImplementation ("com.didichuxing.doraemonkit:dokitx:3.3.5")
+//    releaseImplementation( "com.didichuxing.doraemonkit:dokitx-no-op:3.3.5")
 }

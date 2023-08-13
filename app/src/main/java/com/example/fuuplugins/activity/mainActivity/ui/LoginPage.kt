@@ -1,39 +1,39 @@
 package com.example.fuuplugins.activity.mainActivity.ui
 
-import androidx.compose.animation.AnimatedVisibility
+import android.graphics.BitmapFactory
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.Recomposer
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
 import com.example.fuuplugins.activity.mainActivity.viewModel.LoginPageViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 
@@ -41,6 +41,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun LoginPage (
     viewModel: LoginPageViewModel = viewModel()
 ) {
+    LaunchedEffect(Unit){
+        viewModel.getVerificationCodeFromNetwork()
+    }
     LoginDetailsPage(
         usernameState = viewModel.usernameState.collectAsState(),
         passwordState = viewModel.passwordState.collectAsState(),
@@ -54,8 +57,12 @@ fun LoginPage (
         verificationCodeOnValueChange = {
             viewModel.verificationCodeTextState.value = it
         },
-        verificationCodeState = viewModel.verificationCodeState.collectAsState(),
+        verificationCode = viewModel.verificationCode.collectAsState(),
         verificationCodeTextState = viewModel.verificationCodeTextState.collectAsState(),
+        verificationCodeState = viewModel.verificationCodeState.collectAsState(),
+        retryGetVerificationCode = {
+            viewModel.getVerificationCodeFromNetwork()
+        },
     )
 }
 
@@ -69,24 +76,28 @@ fun LoginPagePreview(){
 @Composable
 @Preview
 fun LoginDetailsPage(
-    usernameState : State<String> = remember {
+    usernameState: State<String> = remember {
         mutableStateOf("")
     },
-    passwordState : State<String> = remember {
+    passwordState: State<String> = remember {
         mutableStateOf("")
     },
-    loginButtonState : State<Boolean> = remember {
+    loginButtonState: State<Boolean> = remember {
         mutableStateOf(true)
     },
-    verificationCodeState :State<WhetherVerificationCode> = remember {
-        mutableStateOf(WhetherVerificationCode.YES)
+    verificationCodeState:State<WhetherVerificationCode> = remember {
+        mutableStateOf(WhetherVerificationCode.FAIL)
     },
-    verificationCodeTextState :State<String> = remember {
+    verificationCode: State<ImageBitmap?> = remember {
+        mutableStateOf(null)
+    },
+    verificationCodeTextState:State<String> = remember {
         mutableStateOf("")
     },
     usernameOnValueChange:(String)->Unit = {},
     passwordOnValueChange:(String)->Unit = {},
-    verificationCodeOnValueChange:(String)->Unit = {}
+    verificationCodeOnValueChange:(String)->Unit = {},
+    retryGetVerificationCode: () -> Unit = {}
 ){
 
     Column(
@@ -122,9 +133,11 @@ fun LoginDetailsPage(
             singleLine = true
         )
         CaptchaLine(
-            verificationCode = verificationCodeState,
+            verificationCodeState = verificationCodeState,
             verificationCodeOnValueChange = verificationCodeOnValueChange,
-            verificationCodeText = verificationCodeTextState
+            verificationCodeText = verificationCodeTextState,
+            verificationCode = verificationCode,
+            retryGetVerificationCode = retryGetVerificationCode
         )
         Text(
             text = "登录则意味您接受西二在线的服务，并接受西二在线的监督。我们承诺对您的信息绝对保密，任何对您信息的使用我们都将经过您的同意，",
@@ -150,15 +163,19 @@ fun LoginDetailsPage(
 @Composable
 @Preview
 fun CaptchaLine(
-    verificationCode :State<WhetherVerificationCode> = remember {
-        mutableStateOf(WhetherVerificationCode.YES)
+    verificationCodeState:State<WhetherVerificationCode> = remember {
+        mutableStateOf(WhetherVerificationCode.FAIL)
     },
     verificationCodeOnValueChange:(String) ->Unit = {
 
     },
-    verificationCodeText :State<String> =  remember {
+    verificationCodeText:State<String> =  remember {
         mutableStateOf("")
-    }
+    },
+    verificationCode: State<ImageBitmap?> = remember {
+        mutableStateOf(null)
+    },
+    retryGetVerificationCode: ()->Unit={}
 ){
     Row (
         modifier = Modifier
@@ -170,18 +187,56 @@ fun CaptchaLine(
         horizontalArrangement = Arrangement.Center
     ){
         Crossfade(
-            targetState = verificationCode.value,
+            targetState = verificationCodeState.value,
             label = "",
             modifier = Modifier
+                .padding(end = 10.dp)
                 .weight(1f)
                 .wrapContentHeight()
         ){
             when(it){
-                WhetherVerificationCode.YES->{
-
+                WhetherVerificationCode.SUCCESS->{
+                    Image(
+                        bitmap = verificationCode.value!!,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .clickable {
+                                retryGetVerificationCode.invoke()
+                            },
+                        contentDescription = null
+                    )
                 }
-                WhetherVerificationCode.NO->{
-
+                WhetherVerificationCode.FAIL->{
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .background(Color.Red)
+                            .clickable {
+                                retryGetVerificationCode.invoke()
+                            },
+                    ){
+                        Text(
+                            text = "加载失败，点击重试",
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                        )
+                    }
+                }
+                WhetherVerificationCode.LOADING->{
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .background(Color.LightGray),
+                    ){
+                        Text(
+                            text = "正在加载",
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                        )
+                    }
                 }
             }
         }
@@ -197,9 +252,17 @@ fun CaptchaLine(
         )
 
     }
+
 }
 
 enum class WhetherVerificationCode{
-    YES,
-    NO
+    SUCCESS,
+    FAIL,
+    LOADING
+}
+
+@Composable
+fun byteArrayToImageBitmap(byteArray: ByteArray): ImageBitmap {
+    val bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+    return bitmap.asImageBitmap()
 }

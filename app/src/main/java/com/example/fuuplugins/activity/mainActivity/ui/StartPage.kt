@@ -1,74 +1,56 @@
 package com.example.fuuplugins.activity.mainActivity.ui
 
 
-import android.content.res.Resources
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
+import android.util.Log
 import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.graphics.toColor
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.palette.graphics.Palette
-import com.example.fuuplugins.R
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.fuuplugins.activity.mainActivity.viewModel.StartPageViewModel
 import dev.jeziellago.compose.markdowntext.MarkdownText
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.util.Timer
 import java.util.TimerTask
@@ -77,7 +59,8 @@ import kotlin.random.Random
 
 @Composable
 fun StartPage(
-    onclick:()->Unit
+    startPageViewModel: StartPageViewModel = viewModel(),
+    jumpOver:()->Unit,
 ) {
     val scope = rememberCoroutineScope()
     DisposableEffect(Unit){
@@ -85,7 +68,7 @@ fun StartPage(
         val task = object : TimerTask() {
             override fun run() {
                 scope.launch {
-                    onclick.invoke()
+                    jumpOver.invoke()
                 }
             }
         }
@@ -94,33 +77,63 @@ fun StartPage(
             task.cancel()
         }
     }
-    Markdown(){
-        onclick.invoke()
+    LaunchedEffect(Unit){
+        startPageViewModel.getStartPageData { jumpOver.invoke() }
+    }
+    when(startPageViewModel.currentPage.collectAsState().value){
+        StartPageShowType.Loading->{
+            Loading()
+        }
+        StartPageShowType.MarkDown->{
+            ImagesOnly(
+                startPageViewModel.imageUrl.collectAsState().value,
+                jumpOver = jumpOver
+            )
+        }
+        StartPageShowType.ImageOnly->{
+            Log.d("==========",startPageViewModel.imageUrl.collectAsState().value)
+            ImagesOnly(
+                startPageViewModel.imageUrl.collectAsState().value,
+                jumpOver = jumpOver
+            )
+        }
     }
 }
 
 @Composable
 fun ImagesOnly(
-
+    context: String,
+    jumpOver:()->Unit = {}
 ){
     Box (
         modifier = Modifier
             .fillMaxSize()
     ){
-        Image(
-            painter = painterResource(id = R.drawable.img),
+        val color = remember {
+            mutableStateOf(Color(216, 216, 237, 100))
+        }
+        AsyncImage(
+            model = ImageRequest.Builder(
+                LocalContext.current,
+            )
+                .allowHardware(true)
+                .allowConversionToBitmap(true)
+                .data(context)
+                .crossfade(true)
+                .build(),
             contentDescription = null,
+            contentScale = ContentScale.FillBounds,
             modifier = Modifier
-                .matchParentSize(),
-            contentScale = ContentScale.FillBounds
+                .matchParentSize()
         )
+
         FloatingActionButton(
-            onClick = { /*TODO*/ },
+            onClick = { jumpOver.invoke() },
             modifier = Modifier
                 .offset(x = (-10).dp, y = (-10).dp)
                 .align(Alignment.BottomEnd),
-            containerColor = Color(Palette.from(BitmapFactory.decodeResource(Resources.getSystem(),R.drawable.img)).generate().getMutedColor(Color(217, 217, 238).toArgb())),
-            contentColor = Color(Palette.from(BitmapFactory.decodeResource(Resources.getSystem(),R.drawable.img)).generate().getMutedColor(Color(217, 217, 238).toArgb()))
+            containerColor = color.value,
+            contentColor = color.value
         ) {
             Image(imageVector = Icons.Filled.KeyboardArrowRight, contentDescription = null)
         }
@@ -130,7 +143,7 @@ fun ImagesOnly(
 @Composable
 @Preview
 fun ImageOnlyPreview(){
-    ImagesOnly()
+    ImagesOnly("")
 }
 
 @Composable
@@ -246,6 +259,21 @@ enum class StartPageShowType{
 private fun Int.floorMod(other: Int): Int = when (other) {
     0 -> this
     else -> this - floorDiv(other) * other
+}
+
+fun drawableToBitmap(drawable: Drawable): Bitmap? {
+    if (drawable is BitmapDrawable) {
+        return drawable.bitmap
+    }
+    var width = drawable.intrinsicWidth
+    width = if (width > 0) width else 1
+    var height = drawable.intrinsicHeight
+    height = if (height > 0) height else 1
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight())
+    drawable.draw(canvas)
+    return bitmap
 }
 
 fun randomColor() = Color(Random.nextInt(0,255),Random.nextInt(0,255),Random.nextInt(0,255))
