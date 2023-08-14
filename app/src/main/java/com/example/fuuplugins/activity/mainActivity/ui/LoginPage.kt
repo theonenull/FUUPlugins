@@ -63,6 +63,7 @@ fun LoginPage (
         retryGetVerificationCode = {
             viewModel.getVerificationCodeFromNetwork()
         },
+        login = { viewModel.login() },
     )
 }
 
@@ -97,7 +98,8 @@ fun LoginDetailsPage(
     usernameOnValueChange:(String)->Unit = {},
     passwordOnValueChange:(String)->Unit = {},
     verificationCodeOnValueChange:(String)->Unit = {},
-    retryGetVerificationCode: () -> Unit = {}
+    retryGetVerificationCode: () -> Unit = {},
+    login : () -> Unit = {}
 ){
 
     Column(
@@ -148,7 +150,7 @@ fun LoginDetailsPage(
         )
 
         ElevatedButton(
-            onClick = { /*TODO*/ },
+            onClick = login,
             contentPadding = PaddingValues(horizontal = 30.dp, vertical = 10.dp),
             modifier = Modifier
                 .padding(top = 50.dp),
