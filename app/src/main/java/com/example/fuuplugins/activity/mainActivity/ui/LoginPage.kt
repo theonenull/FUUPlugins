@@ -39,7 +39,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun LoginPage (
-    viewModel: LoginPageViewModel = viewModel()
+    viewModel: LoginPageViewModel = viewModel(),
+    navigationToMainFramework:()->Unit = {}
 ) {
     LaunchedEffect(Unit){
         viewModel.getVerificationCodeFromNetwork()
@@ -63,14 +64,16 @@ fun LoginPage (
         retryGetVerificationCode = {
             viewModel.getVerificationCodeFromNetwork()
         },
-        login = { viewModel.login() },
+        login = { viewModel.login(loginSuccessful = navigationToMainFramework, loginFailed = { -> }) },
     )
 }
 
 @Composable
 @Preview
 fun LoginPagePreview(){
-    LoginPage()
+    LoginPage(
+
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

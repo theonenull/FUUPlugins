@@ -1,26 +1,38 @@
 package com.example.fuuplugins.activity.mainActivity.viewModel
 
 import android.graphics.BitmapFactory
-import android.util.Base64
+import android.util.Log
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository
+import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository.checkTheUserInformation
+import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository.loadCookieData
+import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository.loginByTokenForIdInUrl
+import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository.loginStudent
+import com.example.fuuplugins.activity.mainActivity.repositories.LoginResult
 import com.example.fuuplugins.activity.mainActivity.ui.WhetherVerificationCode
+import com.example.fuuplugins.util.catchWithMassage
 import com.example.fuuplugins.util.debug
 import com.example.fuuplugins.util.easyToast
+import com.example.fuuplugins.util.flowIO
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
+import kotlinx.coroutines.withContext
+
 
 class LoginPageViewModel: ViewModel() {
-    val usernameState = MutableStateFlow("")
-    val passwordState = MutableStateFlow("")
+    val usernameState = MutableStateFlow("102101624")
+    val passwordState = MutableStateFlow("351172abc2015@")
     val loginButtonState  = MutableStateFlow(true)
     val verificationCodeTextState = MutableStateFlow("")
     val verificationCode = MutableStateFlow<ImageBitmap?>(null)
@@ -40,22 +52,89 @@ class LoginPageViewModel: ViewModel() {
         }
     }
 
+    fun <T> Flow<T>.catchWithMassageAndRefreshVerificationCodeState(block: FlowCollector<T>.(Throwable)->Unit):Flow<T>{
+        getVerificationCodeFromNetwork()
+        return this.catchWithMassage(block)
+    }
 
 
-    fun login(){
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun login(
+        loginSuccessful:() -> Unit = {},
+        loginFailed :() -> Unit = {}
+    ){
+        loginButtonState.value = false
+        val username = usernameState.value
         viewModelScope.launch(Dispatchers.IO) {
-            BlockLoginPageRepository.loginStudent(
+            loginStudent(
                 pass = passwordState.value,
                 user = usernameState.value,
                 captcha = verificationCodeTextState.value,
                 everyErrorAction = {
                     easyToast(it.throwable.message.toString())
                     getVerificationCodeFromNetwork()
+                    loginButtonState.value = true
                 }
             )
-            .collectLatest {
-                debug(it)
-            }
+                .flatMapConcat {
+//                    Log.d("ssss",it.body()?.string().toString() ?: "")
+                    loginByTokenForIdInUrl(
+                        result = it,
+                        failedToGetAccount = {
+                            easyToast(it.message.toString())
+                        },
+                        elseMistake = { error ->
+                            easyToast(error.message.toString())
+                        }
+                    ).retryWhen{ error,tryTime ->
+                        error.message == "获取account失败" && tryTime <= 3
+                    }
+                        .catchWithMassage {
+                            if(it.message == "获取account失败"){
+                                easyToast(it.message.toString())
+                            }
+                            else{
+                                easyToast(it.message.toString())
+                            }
+                        }.flowIO()
+                }
+                .flatMapConcat {
+                    loadCookieData(
+                        queryMap = it,
+                        user = username
+                    )
+                        .catchWithMassage {
+                            loginButtonState.value = true
+                            getVerificationCodeFromNetwork()
+                        }
+                }
+                .flatMapConcat {
+                    checkTheUserInformation(
+                        user = username,
+                        serialNumberHandling = {
+
+                        }
+                    ).catchWithMassage {
+                        loginButtonState.value = true
+                        getVerificationCodeFromNetwork()
+                    }
+                }
+                .collect{
+                    when(it){
+                        LoginResult.LoginError->{
+                            easyToast("登录失败,请重新登录")
+                            loginButtonState.value = true
+                            getVerificationCodeFromNetwork()
+                            loginFailed.invoke()
+                        }
+                        LoginResult.LoginSuccess->{
+                            easyToast("登录成功")
+                            withContext(Dispatchers.Main){
+                                loginSuccessful.invoke()
+                            }
+                        }
+                    }
+                }
         }
     }
 

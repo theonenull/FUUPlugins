@@ -2,6 +2,7 @@ package com.example.fuuplugins.util
 
 import android.util.Log
 import com.example.fuuplugins.config.BuildConfig
+import kotlinx.coroutines.flow.FlowCollector
 
 private val isDebug = BuildConfig.DEBUG //调试模式
 private const val TAG = "fzuhelper"
@@ -128,5 +129,11 @@ fun error(tag: String = TAG, msg: Int) {
 fun error(msg: String, e: Throwable) {
     if (isDebug) {
         Log.e(TAG, msg, e)
+    }
+}
+
+fun <T>FlowCollector<T>.error(msg:String,throwable: Throwable){
+    if (isDebug) {
+        Log.e(this.javaClass.name, msg, throwable)
     }
 }
