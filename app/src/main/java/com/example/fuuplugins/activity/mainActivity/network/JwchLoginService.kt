@@ -10,7 +10,7 @@ import retrofit2.http.POST
 import retrofit2.http.Query
 import retrofit2.http.QueryMap
 
-interface JwchApiService {
+interface JwchLoginService {
 
     //获取验证码
     @GET("https://jwcjwxt1.fzu.edu.cn/plus/verifycode.asp")
@@ -26,6 +26,10 @@ interface JwchApiService {
         @Field("VerifyCode") verifyCode: String
     ): Response<ResponseBody>
 
+    @GET("/student/xkjg/wdxk/xkjg_list.aspx")
+    suspend fun getCourseState(
+        @Query("id") id: String
+    ): ResponseBody
 
     @POST("https://jwcjwxt2.fzu.edu.cn/Sfrz/SSOLogin")
     @Headers("X-Requested-With:XMLHttpRequest")

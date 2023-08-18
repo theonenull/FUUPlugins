@@ -4,7 +4,9 @@ import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fuuplugins.activity.mainActivity.repositories.BlockTestStartPageRepository
+import com.example.fuuplugins.activity.mainActivity.repositories.DataType
 import com.example.fuuplugins.activity.mainActivity.ui.StartPageShowType
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flow
@@ -30,7 +32,7 @@ class StartPageViewModel(
     }
 
     fun getStartPageData(
-        failAction :(Throwable) -> Unit = {}
+        failAction:FlowCollector<DataType>.(Throwable) -> Unit = {}
     ){
         viewModelScope.launch {
             BlockTestStartPageRepository.getStartPageData(

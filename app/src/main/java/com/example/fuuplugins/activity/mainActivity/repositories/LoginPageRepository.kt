@@ -1,38 +1,21 @@
 package com.example.fuuplugins.activity.mainActivity.repositories
 
 import android.util.Log
-import android.widget.Toast
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.ViewModel
-import com.example.fuuplugins.FuuApplication
 import com.example.fuuplugins.activity.mainActivity.data.CookieUtil
-import com.example.fuuplugins.activity.mainActivity.network.JwchApiService
-import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository.getJwchApi
+import com.example.fuuplugins.activity.mainActivity.network.JwchLoginService
 import com.example.fuuplugins.config.JWCH_BASE_URL
 import com.example.fuuplugins.network.OkHttpUtil
 import com.example.fuuplugins.util.catchWithMassage
-import com.example.fuuplugins.util.debug
-import com.example.fuuplugins.util.flowDefault
 import com.example.fuuplugins.util.flowIO
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.retry
-import kotlinx.coroutines.flow.retryWhen
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.HttpUrl
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.ResponseBody
-import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.util.Base64
 import java.util.concurrent.TimeUnit
 
 interface LoginPageRepository{
@@ -40,7 +23,7 @@ interface LoginPageRepository{
 }
 
 object BlockLoginPageRepository : LoginPageRepository{
-    private var jwchApiServiceInstance: JwchApiService? = null
+    private var jwchLoginServiceInstance: JwchLoginService? = null
     private val client: OkHttpClient by lazy {
         OkHttpUtil.getDefaultClient().newBuilder()
 //            .hostnameVerifier { hostname, _ ->
@@ -51,8 +34,8 @@ object BlockLoginPageRepository : LoginPageRepository{
             .readTimeout(10, TimeUnit.SECONDS)
             .build()
     }
-    fun getJwchApi(): JwchApiService {
-        if (jwchApiServiceInstance == null) {
+    fun getJwchApi(): JwchLoginService {
+        if (jwchLoginServiceInstance == null) {
             val client = client.newBuilder().cookieJar(object : CookieJar {
                 override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
                     cookies.forEach {
@@ -67,10 +50,11 @@ object BlockLoginPageRepository : LoginPageRepository{
                 }
             }).protocols(listOf(Protocol.HTTP_1_1))
                 .build()
-            jwchApiServiceInstance = createApi(JWCH_BASE_URL, client)
+            jwchLoginServiceInstance = createApi(JWCH_BASE_URL, client)
         }
-        return jwchApiServiceInstance!!
+        return jwchLoginServiceInstance!!
     }
+
     suspend fun getVerifyCode(): Flow<ByteArray> {
         return flow {
             val inputString = getJwchApi().getVerifyCode().bytes()
@@ -204,6 +188,7 @@ object BlockLoginPageRepository : LoginPageRepository{
         return retrofit.create(T::class.java)
     }
 }
+
 data class TokenData(
     val token : String,
     val url : String

@@ -5,9 +5,6 @@
       <entry key="CaptchaLine">
         <State />
       </entry>
-      <entry key="MainFrameworkPreview">
-        <State />
-      </entry>
       <entry key="PluginDetail">
         <State />
       </entry>
@@ -18,6 +15,9 @@
         <State />
       </entry>
       <entry key="app">
+        <State />
+      </entry>
+      <entry key="useAppContext()">
         <State />
       </entry>
     </value>

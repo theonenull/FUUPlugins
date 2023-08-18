@@ -1,3 +1,5 @@
+import android.annotation.SuppressLint
+
 @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
     alias(libs.plugins.androidApplication)
@@ -57,6 +59,7 @@ android {
 
 dependencies {
     val nav_version = "2.5.3"
+    val room_version = "2.5.0"
 
     implementation(libs.core.ktx)
     implementation(libs.lifecycle.runtime.ktx)
@@ -92,4 +95,12 @@ dependencies {
 //
 //    debugImplementation ("com.didichuxing.doraemonkit:dokitx:3.3.5")
 //    releaseImplementation( "com.didichuxing.doraemonkit:dokitx-no-op:3.3.5")
+    implementation("androidx.room:room-runtime:$room_version")
+    annotationProcessor("androidx.room:room-compiler:$room_version")
+
+    implementation("org.jsoup:jsoup:1.13.1")
+
+//    implementation("androidx.paging:paging-runtime:3.2.0")
+//    implementation("androidx.paging：paging-compose:1.0.0")
+
 }

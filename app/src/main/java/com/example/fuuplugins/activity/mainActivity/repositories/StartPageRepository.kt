@@ -1,12 +1,13 @@
 package com.example.fuuplugins.activity.mainActivity.repositories
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 
 
 interface StartPageRepository {
-    abstract fun getStartPageData( failAction: (Throwable)->Unit ): Flow<DataType>
+    abstract fun getStartPageData( failAction: FlowCollector<DataType>.(Throwable)->Unit ): Flow<DataType>
 }
 
 class DataType(
@@ -15,7 +16,7 @@ class DataType(
 )
 
 object BlockTestStartPageRepository : StartPageRepository {
-    override fun getStartPageData(failAction: (Throwable) -> Unit): Flow<DataType> {
+    override fun getStartPageData(failAction: FlowCollector<DataType>.(Throwable) -> Unit): Flow<DataType> {
         return flow {
             emit(
                 DataType(
@@ -24,7 +25,7 @@ object BlockTestStartPageRepository : StartPageRepository {
                 )
             )
         }.catch {
-            failAction.invoke(it)
+            failAction.invoke(this,it)
         }
     }
 }
