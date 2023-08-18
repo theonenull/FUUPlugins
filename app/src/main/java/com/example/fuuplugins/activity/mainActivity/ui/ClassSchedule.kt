@@ -1,5 +1,6 @@
 package com.example.fuuplugins.activity.mainActivity.ui
 
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
@@ -115,7 +116,7 @@ fun ClassSchedule(
                             .fillMaxSize()
                             .verticalScroll(sidebarSlideState)
                     ) {
-                        WeekDay.values().forEachIndexed { index, _ ->
+                        WeekDay.values().forEachIndexed { weekIndex, value ->
                             Column(
                                 modifier = Modifier
                                     .weight(1f)
@@ -123,17 +124,22 @@ fun ClassSchedule(
                             ) {
                                 viewModel.courseForShow.collectAsState().value?.let { courseBeans ->
                                     courseBeans.filter { courseBeanData ->
-                                        courseBeanData.kcWeekend == index + 1
+                                        courseBeanData.kcWeekend == weekIndex + 1
                                     }.sortedBy { courseBean ->
                                         courseBean.kcStartTime
-                                    }.forEachIndexed { index, item ->
+                                    }.apply {
+                                        this.forEach{
+                                            debug("start : ${value.chineseName}:${it.kcStartTime}")
+                                        }
+                                    }.let {
+                                        it.forEachIndexed { index, item ->
                                         if (index == 0) {
                                             EmptyClassCard(
                                                 item.kcStartTime - 1
                                             )
                                         } else {
                                             EmptyClassCard(
-                                                courseBeans[index].kcStartTime - courseBeans[index - 1].kcEndTime - 1
+                                                it[index].kcStartTime - it[index - 1].kcEndTime - 1
                                             )
                                         }
                                         ClassCard(
@@ -142,6 +148,7 @@ fun ClassSchedule(
                                                 viewModel.courseDialog.value = it
                                             }
                                         )
+                                    }
                                     }
                                 }
                             }
@@ -221,6 +228,9 @@ fun ClassCard(
 fun EmptyClassCard(
     weight:Int = 0
 ){
+    LaunchedEffect(Unit){
+
+    }
     Column (
         modifier = Modifier
             .height((75 * weight).dp)
