@@ -1,7 +1,5 @@
 package com.example.fuuplugins.config
 
-import java.lang.Boolean
-
 
 object BuildConfig {
     const val DEBUG = true

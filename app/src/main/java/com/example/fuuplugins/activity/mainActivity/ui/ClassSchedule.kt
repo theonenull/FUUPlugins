@@ -1,5 +1,6 @@
 package com.example.fuuplugins.activity.mainActivity.ui
 
+import android.os.Debug
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
@@ -89,6 +90,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.example.material.ScrollSelection
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
@@ -104,12 +106,6 @@ fun ClassSchedule(
     val sidebarSlideState by viewModel.scrollState.collectAsStateWithLifecycle()
     val courseDialog by viewModel.courseDialog.collectAsStateWithLifecycle()
     val academicYearSelectsDialogState by viewModel.academicYearSelectsDialogState.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit){
-        viewModel.getCourseFromNetwork(viewModel.pageState.currentPage+1)
-    }
-    LaunchedEffect(viewModel.pageState.currentPage){
-        viewModel.changeWeek(viewModel.pageState.currentPage + 1)
-    }
 
     Column {
         TopAppBar(
@@ -117,7 +113,7 @@ fun ClassSchedule(
 
             },
             title = {
-                Text(text = "第${viewModel.pageState.currentPage + 1}周")
+                Text(text = "第${viewModel.pageState.collectAsStateWithLifecycle().value.currentPage + 1}周")
             },
             actions = {
                 IconButton(onClick = {
@@ -200,9 +196,9 @@ fun ClassSchedule(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight(),
-                state = viewModel.pageState,
-                pageCount = 10
-            ){
+                state = viewModel.pageState.collectAsStateWithLifecycle().value,
+                pageCount = 30
+            ){ page->
                 Column {
                     TimeOfMonthColumn()
                     Row(
@@ -217,29 +213,33 @@ fun ClassSchedule(
                                     .requiredHeight((11 * 75).dp)
                             ) {
                                 viewModel.courseForShow.collectAsStateWithLifecycle().value?.let { courseBeans ->
-                                    courseBeans.filter { courseBeanData ->
-                                        courseBeanData.kcWeekend == weekIndex + 1
-                                    }.sortedBy { courseBean ->
-                                        courseBean.kcStartTime
-                                    }.let {
-                                        it.forEachIndexed { index, item ->
-                                            if (index == 0) {
-                                                EmptyClassCard(
-                                                    item.kcStartTime - 1
-                                                )
-                                            } else {
-                                                EmptyClassCard(
-                                                    it[index].kcStartTime - it[index - 1].kcEndTime - 1
+                                    courseBeans
+                                        .filter {
+                                            it.kcStartWeek <= page+1 && it.kcEndWeek >= page+1
+                                        }
+                                        .filter { courseBeanData ->
+                                            courseBeanData.kcWeekend == weekIndex + 1
+                                        }.sortedBy { courseBean ->
+                                            courseBean.kcStartTime
+                                        }.let {
+                                            it.forEachIndexed { index, item ->
+                                                if (index == 0) {
+                                                    EmptyClassCard(
+                                                        item.kcStartTime - 1
+                                                    )
+                                                } else {
+                                                    EmptyClassCard(
+                                                        it[index].kcStartTime - it[index - 1].kcEndTime - 1
+                                                    )
+                                                }
+                                                ClassCard(
+                                                    item,
+                                                    detailAboutCourse = {
+                                                        viewModel.courseDialog.value = it
+                                                    }
                                                 )
                                             }
-                                            ClassCard(
-                                                item,
-                                                detailAboutCourse = {
-                                                    viewModel.courseDialog.value = it
-                                                }
-                                            )
                                         }
-                                    }
                                 }
                             }
                         }
@@ -263,7 +263,8 @@ fun ClassSchedule(
             },
             commit = {
                 viewModel.currentYear.value = it
-            }
+            },
+            list = viewModel.yearOptions.collectAsStateWithLifecycle().value?: listOf()
         )
     }
 }

@@ -60,6 +60,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.fuuplugins.activity.mainActivity.viewModel.ClassScheduleViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
@@ -123,7 +125,7 @@ fun MainFramework(){
                                             mainFrameworkScope.launch {
                                                 drawerState.open()
                                             }
-                                        }
+                                        },
                                     )
                                 }
                                 1 -> {

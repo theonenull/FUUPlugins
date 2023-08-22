@@ -6,6 +6,7 @@ import com.example.fuuplugins.activity.mainActivity.data.CookieUtil
 import com.example.fuuplugins.activity.mainActivity.data.course.CourseBean
 import com.example.fuuplugins.activity.mainActivity.network.JwchCourseService
 import com.example.fuuplugins.activity.mainActivity.network.JwchLoginService
+import com.example.fuuplugins.activity.mainActivity.network.OthersApiService
 import com.example.fuuplugins.activity.mainActivity.viewModel.ClassScheduleViewModel
 import com.example.fuuplugins.config.JWCH_BASE_URL
 import com.example.fuuplugins.network.OkHttpUtil
@@ -15,6 +16,7 @@ import com.example.fuuplugins.util.flowIO
 import com.example.fuuplugins.util.info
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.HttpUrl
@@ -23,6 +25,7 @@ import okhttp3.Protocol
 import org.jsoup.Jsoup
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.nio.charset.Charset
 import java.util.ArrayList
 import java.util.HashMap
 import java.util.concurrent.TimeUnit
@@ -30,6 +33,7 @@ import java.util.regex.Pattern
 
 object ClassScheduleRepository {
     private var jwchCourseServiceInstance: JwchCourseService? = null
+    private var othersApiServiceInstance: OthersApiService? = null
     private val client: OkHttpClient by lazy {
         OkHttpUtil.getDefaultClient().newBuilder()
 //            .hostnameVerifier { hostname, _ ->
@@ -39,6 +43,12 @@ object ClassScheduleRepository {
             .connectTimeout(5, TimeUnit.SECONDS)
             .readTimeout(10, TimeUnit.SECONDS)
             .build()
+    }
+    fun getOthersApi(): OthersApiService {
+        if (othersApiServiceInstance == null) {
+            othersApiServiceInstance = createApi("http://127.0.0.1", client)
+        }
+        return othersApiServiceInstance!!
     }
     fun getJwchCourseApi(): JwchCourseService {
         if (jwchCourseServiceInstance == null) {
@@ -80,7 +90,7 @@ object ClassScheduleRepository {
         }.flowIO()
     }
 
-    fun getCoursesHTML(viewStateMap:Map<String,String>,xq: String):Flow<List<CourseBean>>{
+    fun getCoursesHTML(viewStateMap:Map<String,String>,xq: String,onGetOptions : (List<String>)->Unit = {}):Flow<List<CourseBean>>{
         return flow {
             val result = getJwchCourseApi().getCourses(
                 CookieUtil.id,
@@ -88,7 +98,7 @@ object ClassScheduleRepository {
                 viewStateMap["EVENTVALIDATION"] ?: "",
                 viewStateMap["VIEWSTATE"] ?: ""
             ).string()
-            val data =  parseCoursesHTML(xq, result)
+            val data =  parseCoursesHTML(xq, result,onGetOptions=onGetOptions)
             emit(data)
         }
             .flowIO()
@@ -96,7 +106,11 @@ object ClassScheduleRepository {
 
             }
     }
-    private fun parseCoursesHTML(xueNian: String, result: String): List<CourseBean> {
+    private fun parseCoursesHTML(
+        xueNian: String,
+        result: String,
+        onGetOptions : (List<String>)->Unit = {}
+    ): List<CourseBean> {
         debug(result)
         val tempCourses = ArrayList<CourseBean>()
         //解析学年
@@ -113,6 +127,7 @@ object ClassScheduleRepository {
             optionStr.add(element.attr("value"))
             info("添加历史学期" + element.attr("value"))
         }
+        onGetOptions.invoke(optionStr.toList())
 //        if (optionStr.isEmpty()) {
 //            throw ApiException("term is empty!")
 //        }
@@ -252,6 +267,34 @@ object ClassScheduleRepository {
         return params
     }
 
+//    private suspend fun getWeekHTML(): String {
+//        return String(getOthersApi().getWeek().bytes(), Charset.forName("GB2312"))
+//    }
+    fun getWeek():Flow<WeekData>{
+        return flow {
+            emit(String(getOthersApi().getWeekHtml().bytes(), Charset.forName("GB2312")) )
+        }.map {
+            parseWeekHTML(it)
+        }
+    }
+
+
+    private fun parseWeekHTML(result: String): WeekData {
+//        val document = Jsoup.parse(result)
+//        val curWeek = document.select("font[color=#FF0000]")[0].text()
+//        val yearStr = document.select("b")[0].text()
+//        val year = yearStr.substring(yearStr.indexOf("学年") - 4, yearStr.indexOf("学年"))
+//        val xuenian = yearStr.substring(yearStr.indexOf("学期") - 2, yearStr.indexOf("学期"))
+        val nowWeek = result.split("var week = \"")[1].split("\";")[0].toInt()
+        val curXuenian = result.split("var xq = \"")[1].split("\";")[0].toInt()
+        val curYear = result.split("var xn = \"")[1].split("\";")[0].toInt()
+        return WeekData(
+            nowWeek = nowWeek,
+            curXuenian = curXuenian,
+            curYear = curYear
+        )
+    }
+
     private inline fun <reified T> createApi(url: String, client: OkHttpClient): T {
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -261,3 +304,33 @@ object ClassScheduleRepository {
         return retrofit.create(T::class.java)
     }
 }
+
+data class WeekData(
+    val nowWeek : Int,
+    val curXuenian: Int,
+    val curYear: Int
+){
+    fun getXueQi():String{
+        return "${this.curYear}0${this.curXuenian}"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return "${this.curXuenian}${this.curXuenian}${this.curXuenian}" ==  "${(other as WeekData).curXuenian}${(other as WeekData).curXuenian}${(other as WeekData).curXuenian}"
+    }
+
+    override fun hashCode(): Int {
+        var result = nowWeek
+        result = 31 * result + curXuenian
+        result = 31 * result + curYear
+        return result
+    }
+}
+
+data class CourseData(
+    val stateHTML:String,
+    val weekData: WeekData
+)
+data class CourseDataWrap(
+    val map:Map<String,String>,
+    val weekData: WeekData
+)

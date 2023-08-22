@@ -102,4 +102,6 @@ dependencies {
 //    implementation("androidx.paging:paging-runtime:3.2.0")
 //    implementation("androidx.paging：paging-compose:1.0.0")
     implementation("com.github.theonenull:AndroidComposeMaterial:0.0.5")
+
+    implementation("androidx.datastore:datastore-preferences-core:1.0.0")
 }
