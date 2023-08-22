@@ -5,10 +5,10 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -20,20 +20,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyGridState
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
+
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -41,13 +41,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,35 +58,130 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.fuuplugins.activity.mainActivity.viewModel.ClassScheduleViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fuuplugins.activity.mainActivity.data.course.CourseBean
 import com.example.fuuplugins.config.LightColors
 import com.example.fuuplugins.util.debug
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlin.random.Random
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedButton
 
-@OptIn(ExperimentalFoundationApi::class)
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
+import com.example.material.ScrollSelection
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+
+
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ClassSchedule(
-    viewModel: ClassScheduleViewModel = viewModel()
+    viewModel: ClassScheduleViewModel = viewModel(),
+    openDrawer : ()->Unit = {}
 ){
-    val pageState = viewModel.pageState.collectAsState().value
-    val sidebarSlideState = viewModel.scrollState.collectAsState().value
-    val page = viewModel.page.collectAsState()
-    val courseDialog = viewModel.courseDialog.collectAsState()
-    val courseDialogState = viewModel.courseDialogState.collectAsState()
-
+    val sidebarSlideState by viewModel.scrollState.collectAsStateWithLifecycle()
+    val courseDialog by viewModel.courseDialog.collectAsStateWithLifecycle()
+    val academicYearSelectsDialogState by viewModel.academicYearSelectsDialogState.collectAsStateWithLifecycle()
     LaunchedEffect(Unit){
-        viewModel.getCourseFromNetwork(page.value+1)
+        viewModel.getCourseFromNetwork(viewModel.pageState.currentPage+1)
     }
-
-    LaunchedEffect(pageState.currentPage){
-        debug(pageState.currentPage)
-        viewModel.changeWeek(pageState.currentPage + 1)
+    LaunchedEffect(viewModel.pageState.currentPage){
+        viewModel.changeWeek(viewModel.pageState.currentPage + 1)
     }
 
     Column {
+        TopAppBar(
+            navigationIcon = {
+
+            },
+            title = {
+                Text(text = "第${viewModel.pageState.currentPage + 1}周")
+            },
+            actions = {
+                IconButton(onClick = {
+                    openDrawer.invoke()
+                }) {
+                    Icon(imageVector = Icons.Filled.AccountCircle, contentDescription = null)
+                }
+                IconButton(onClick = {
+                    openDrawer.invoke()
+                }) {
+                    Icon(imageVector = Icons.Filled.Refresh, contentDescription = null)
+                }
+                var expanded by remember { mutableStateOf(false) }
+                Box(
+                    modifier = Modifier
+                        .wrapContentSize()
+                ) {
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Localized description")
+                    }
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(text = "学年") },
+                            onClick = {
+                                expanded = false
+                                viewModel.academicYearSelectsDialogState.value = true
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Outlined.Edit,
+                                    contentDescription = null
+                                )
+                            },
+                            trailingIcon = {
+                                Text(viewModel.currentYear.collectAsStateWithLifecycle().value.toString(),
+                                    textAlign = TextAlign.Center)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Settings") },
+                            onClick = { /* Handle settings! */ },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Outlined.Settings,
+                                    contentDescription = null
+                                )
+                            })
+                        DropdownMenuItem(
+                            text = { Text("Send Feedback") },
+                            onClick = { /* Handle send feedback! */ },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Outlined.Email,
+                                    contentDescription = null
+                                )
+                            },
+                            trailingIcon = { Text("F11", textAlign = TextAlign.Center) })
+                    }
+                }
+            }
+        )
         TimeOfWeekColumn()
         Row (
             modifier = Modifier
@@ -103,12 +197,12 @@ fun ClassSchedule(
                 )
             }
             HorizontalPager(
-                pageCount = 20,
-                state = pageState,
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxHeight()
-            ) {
+                    .fillMaxHeight(),
+                state = viewModel.pageState,
+                pageCount = 10
+            ){
                 Column {
                     TimeOfMonthColumn()
                     Row(
@@ -122,33 +216,29 @@ fun ClassSchedule(
                                     .weight(1f)
                                     .requiredHeight((11 * 75).dp)
                             ) {
-                                viewModel.courseForShow.collectAsState().value?.let { courseBeans ->
+                                viewModel.courseForShow.collectAsStateWithLifecycle().value?.let { courseBeans ->
                                     courseBeans.filter { courseBeanData ->
                                         courseBeanData.kcWeekend == weekIndex + 1
                                     }.sortedBy { courseBean ->
                                         courseBean.kcStartTime
-                                    }.apply {
-                                        this.forEach{
-                                            debug("start : ${value.chineseName}:${it.kcStartTime}")
-                                        }
                                     }.let {
                                         it.forEachIndexed { index, item ->
-                                        if (index == 0) {
-                                            EmptyClassCard(
-                                                item.kcStartTime - 1
-                                            )
-                                        } else {
-                                            EmptyClassCard(
-                                                it[index].kcStartTime - it[index - 1].kcEndTime - 1
+                                            if (index == 0) {
+                                                EmptyClassCard(
+                                                    item.kcStartTime - 1
+                                                )
+                                            } else {
+                                                EmptyClassCard(
+                                                    it[index].kcStartTime - it[index - 1].kcEndTime - 1
+                                                )
+                                            }
+                                            ClassCard(
+                                                item,
+                                                detailAboutCourse = {
+                                                    viewModel.courseDialog.value = it
+                                                }
                                             )
                                         }
-                                        ClassCard(
-                                            item,
-                                            detailAboutCourse = {
-                                                viewModel.courseDialog.value = it
-                                            }
-                                        )
-                                    }
                                     }
                                 }
                             }
@@ -158,11 +248,21 @@ fun ClassSchedule(
             }
         }
     }
-    courseDialog.value?.let {
+    courseDialog?.let {
         ClassDialog(
             courseBean = it,
             onDismissRequest = {
                 viewModel.courseDialog.value = null
+            }
+        )
+    }
+    if(academicYearSelectsDialogState){
+        AcademicYearSelectsDialog(
+            onDismissRequest = {
+                viewModel.academicYearSelectsDialogState.value = false
+            },
+            commit = {
+                viewModel.currentYear.value = it
             }
         )
     }
@@ -407,7 +507,6 @@ fun ClassDialog(
             }
         }
     }
-
 }
 
 //@Composable
@@ -504,4 +603,65 @@ enum class WeekDay(val chineseName: String, val englishName: String) {
     FRIDAY("星期五", "Friday"),
     SATURDAY("星期六", "Saturday"),
     SUNDAY("星期日", "Sunday"),
+}
+
+@Composable
+@Preview
+fun AcademicYearSelectsDialog(
+    onDismissRequest : ()->Unit = {},
+    list: List<String> = listOf("1","2","3"),
+    commit : (String) -> Unit  = {}
+){
+    var data by remember {
+        mutableStateOf(list[0])
+    }
+    val state = rememberLazyListState()
+
+    Dialog(
+        onDismissRequest = onDismissRequest
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.7f)
+                .clip(
+                    RoundedCornerShape(10.dp)
+                )
+                .background(Color.LightGray)
+                .padding(10.dp)
+        ) {
+            ScrollSelection(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight(),
+                textList = list,
+                backgroundContent = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(217, 217, 238))
+                    )
+                },
+                onItemSelected = { _ ,item->
+                    data = item
+                    debug(item)
+                },
+                state = state
+            )
+            ElevatedButton(
+                onClick = {
+                    commit.invoke(data)
+                    onDismissRequest.invoke()
+                },
+                modifier = Modifier
+                    .padding(top = 20.dp),
+                contentPadding = PaddingValues(vertical = 10.dp, horizontal = 30.dp)
+            ) {
+                Text(text = "确定")
+            }
+        }
+    }
 }

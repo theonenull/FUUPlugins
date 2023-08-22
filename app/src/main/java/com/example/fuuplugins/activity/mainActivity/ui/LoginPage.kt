@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
@@ -24,6 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -36,6 +39,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.fuuplugins.activity.mainActivity.viewModel.LoginPageViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.material.AnimationEffectData
+import com.example.material.ButtonState
+import com.example.material.LoadableButton
 
 @Composable
 fun LoginPage (
@@ -151,16 +157,43 @@ fun LoginDetailsPage(
                 .padding(top = 30.dp)
                 .fillMaxWidth()
         )
-
-        ElevatedButton(
-            onClick = login,
-            contentPadding = PaddingValues(horizontal = 30.dp, vertical = 10.dp),
-            modifier = Modifier
-                .padding(top = 50.dp),
-            enabled = usernameState.value!="" && passwordState.value != "" && loginButtonState.value && verificationCodeTextState.value != ""
-        ) {
-            Text(text = "LOGIN")
+        val buttonState by remember {
+            derivedStateOf{
+                when(loginButtonState.value){
+                    true -> ButtonState.Normal
+                    false ->  ButtonState.Loading
+                }
+            }
         }
+        LoadableButton(
+            onClick = login,
+            buttonState = buttonState,
+            enabled = usernameState.value!="" && passwordState.value != "" && loginButtonState.value && verificationCodeTextState.value != "",
+            normalContent = {
+                Text(text = "LOGIN")
+            },
+            modifier = Modifier
+                .padding(top = 30.dp),
+            loadingContent = {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(10.dp)
+                )
+            },
+            loadingIntSize = AnimationEffectData(50,50),
+            normalIntSize = AnimationEffectData(150,50)
+        )
+
+//        ElevatedButton(
+//            onClick = login,
+//            contentPadding = PaddingValues(horizontal = 30.dp, vertical = 10.dp),
+//            modifier = Modifier
+//                .padding(top = 50.dp),
+//            enabled = usernameState.value!="" && passwordState.value != "" && loginButtonState.value && verificationCodeTextState.value != ""
+//        ) {
+//            Text(text = "LOGIN")
+//        }
     }
 }
 

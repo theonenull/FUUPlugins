@@ -2,13 +2,13 @@
 <project version="4">
   <component name="deploymentTargetDropDown">
     <value>
+      <entry key="AcademicYearSelectsDialog">
+        <State />
+      </entry>
       <entry key="CaptchaLine">
         <State />
       </entry>
-      <entry key="PluginDetail">
-        <State />
-      </entry>
-      <entry key="PluginIntroductionList">
+      <entry key="LoginDetailsPage">
         <State />
       </entry>
       <entry key="PluginsStore">

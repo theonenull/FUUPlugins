@@ -22,4 +22,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "FUUPlugins"
 include(":app")
- 
+

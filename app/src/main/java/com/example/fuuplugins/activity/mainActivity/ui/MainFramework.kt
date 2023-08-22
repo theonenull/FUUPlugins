@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowBack
@@ -86,30 +87,7 @@ fun MainFramework(){
             content = {
                 var selectedItem by remember { mutableStateOf(0) }
                 Column {
-                    TopAppBar(
-                        navigationIcon = {
 
-                        },
-                        title = {
-                            Text(text = ListOfPages[selectedItem])
-                        },
-                        actions = {
-                            IconButton(onClick = {
-                                mainFrameworkScope.launch {
-                                    drawerState.open()
-                                }
-                            }) {
-                                Icon(imageVector = Icons.Filled.AccountCircle, contentDescription = null)
-                            }
-                            IconButton(onClick = {
-                                mainFrameworkScope.launch {
-                                    drawerState.open()
-                                }
-                            }) {
-                                Icon(imageVector = Icons.Filled.Refresh, contentDescription = null)
-                            }
-                        }
-                    )
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -140,7 +118,13 @@ fun MainFramework(){
                         ) {
                             when (it){
                                 0 -> {
-                                    ClassSchedule()
+                                    ClassSchedule(
+                                        openDrawer = {
+                                            mainFrameworkScope.launch {
+                                                drawerState.open()
+                                            }
+                                        }
+                                    )
                                 }
                                 1 -> {
                                     PluginTool()
