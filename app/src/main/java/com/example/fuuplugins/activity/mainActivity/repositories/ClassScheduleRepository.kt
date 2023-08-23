@@ -44,13 +44,13 @@ object ClassScheduleRepository {
             .readTimeout(10, TimeUnit.SECONDS)
             .build()
     }
-    fun getOthersApi(): OthersApiService {
+    suspend fun getOthersApi(): OthersApiService {
         if (othersApiServiceInstance == null) {
             othersApiServiceInstance = createApi("http://127.0.0.1", client)
         }
         return othersApiServiceInstance!!
     }
-    fun getJwchCourseApi(): JwchCourseService {
+    suspend fun getJwchCourseApi(): JwchCourseService {
         if (jwchCourseServiceInstance == null) {
             val client = client.newBuilder().cookieJar(object : CookieJar {
                 override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
@@ -74,7 +74,7 @@ object ClassScheduleRepository {
 
 
 
-    fun getCourseStateHTML(): Flow<String> {
+    suspend fun getCourseStateHTML(): Flow<String> {
         return flow {
             val data = getJwchCourseApi().getCourseState(CookieUtil.id).string()
             emit(data)
@@ -82,7 +82,7 @@ object ClassScheduleRepository {
     }
 
 
-    fun getCourses(xq:String,stateHTML:String):Flow<Map<String,String>>{
+    suspend fun getCourses(xq:String,stateHTML:String):Flow<Map<String,String>>{
         return flow {
             info(stateHTML)
             val viewStateMap = parseCourseStateHTML(stateHTML)
@@ -90,7 +90,7 @@ object ClassScheduleRepository {
         }.flowIO()
     }
 
-    fun getCoursesHTML(viewStateMap:Map<String,String>,xq: String,onGetOptions : (List<String>)->Unit = {}):Flow<List<CourseBean>>{
+    suspend fun getCoursesHTML(viewStateMap:Map<String,String>,xq: String,onGetOptions : (List<String>)->Unit = {}):Flow<List<CourseBean>>{
         return flow {
             val result = getJwchCourseApi().getCourses(
                 CookieUtil.id,
@@ -106,7 +106,7 @@ object ClassScheduleRepository {
 
             }
     }
-    private fun parseCoursesHTML(
+    private suspend fun parseCoursesHTML(
         xueNian: String,
         result: String,
         onGetOptions : (List<String>)->Unit = {}
@@ -255,7 +255,7 @@ object ClassScheduleRepository {
         info("history共" + courseEles.size + "个" + " 解析后:" + tempCourses.size + "个")
         return tempCourses
     }
-    private fun parseCourseStateHTML(result: String): Map<String, String> {
+    private suspend fun parseCourseStateHTML(result: String): Map<String, String> {
         val document = Jsoup.parse(result)
         info("获取课表参数")
         //设置常用参数
@@ -270,7 +270,7 @@ object ClassScheduleRepository {
 //    private suspend fun getWeekHTML(): String {
 //        return String(getOthersApi().getWeek().bytes(), Charset.forName("GB2312"))
 //    }
-    fun getWeek():Flow<WeekData>{
+    suspend fun getWeek():Flow<WeekData>{
         return flow {
             emit(String(getOthersApi().getWeekHtml().bytes(), Charset.forName("GB2312")) )
         }.map {
@@ -279,7 +279,7 @@ object ClassScheduleRepository {
     }
 
 
-    private fun parseWeekHTML(result: String): WeekData {
+    private suspend fun parseWeekHTML(result: String): WeekData {
 //        val document = Jsoup.parse(result)
 //        val curWeek = document.select("font[color=#FF0000]")[0].text()
 //        val yearStr = document.select("b")[0].text()

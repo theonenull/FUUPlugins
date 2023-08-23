@@ -1,19 +1,26 @@
 package com.example.fuuplugins.activity.mainActivity.repositories
 
 import android.util.Log
+import androidx.datastore.preferences.core.edit
+import com.example.fuuplugins.FuuApplication
 import com.example.fuuplugins.activity.mainActivity.data.CookieUtil
 import com.example.fuuplugins.activity.mainActivity.network.JwchLoginService
+import com.example.fuuplugins.activity.mainActivity.ui.UserDataInPersonPage
 import com.example.fuuplugins.config.JWCH_BASE_URL
+import com.example.fuuplugins.config.dataStore.UserPreferencesKey
+import com.example.fuuplugins.config.dataStore.userDataStore
 import com.example.fuuplugins.network.OkHttpUtil
 import com.example.fuuplugins.util.catchWithMassage
 import com.example.fuuplugins.util.flowIO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import org.jsoup.Jsoup
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
@@ -169,7 +176,19 @@ object BlockLoginPageRepository : LoginPageRepository{
             //Step5 检查用户信息 防止串号
             val result = getJwchApi().getInfo(CookieUtil.id).string()
             val check = result.contains(user)
+            Log.d("sssssssssssss",result)
             if (check) {
+                val data = Jsoup.parse(result)
+                val number = data.getElementById("ContentPlaceHolder1_LB_xh").text()
+                val name = data.getElementById("ContentPlaceHolder1_LB_xm").text()
+                val academy = data.getElementById("ContentPlaceHolder1_LB_xymc").text()
+                Log.d("sssssssssssss",number)
+                FuuApplication.instance.userDataStore.edit { preferences ->
+                    preferences[UserPreferencesKey.USER_NUMBER] = number
+                    preferences[UserPreferencesKey.USER_NAME] = name
+                    preferences[UserPreferencesKey.USER_ACADEMY] = academy
+                }
+                UserDataInPersonPage()
                 emit(LoginResult.LoginSuccess)
             } else {
                 //用户信息不对，重新登录试试看

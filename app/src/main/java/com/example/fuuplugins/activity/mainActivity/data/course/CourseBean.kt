@@ -3,13 +3,14 @@ package com.example.fuuplugins.activity.mainActivity.data.course
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.example.fuuplugins.activity.mainActivity.config.RoomConfig.CourseDaoTableName
 
 /**
  * Create by NOSAE on 2020/9/27
  *
  * @param type see [com.w2fzu.fzuhelper.model.db.CourseType]
  */
-@Entity
+@Entity(tableName = CourseDaoTableName)
 data class CourseBean(
     @PrimaryKey(autoGenerate = true)
     var courseId: Long = 0,

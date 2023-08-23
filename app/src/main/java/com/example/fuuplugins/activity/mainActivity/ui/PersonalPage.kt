@@ -34,12 +34,10 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -47,11 +45,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.LinearGradientShader
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -59,12 +55,24 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.preferences.core.edit
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.fuuplugins.FuuApplication
 import com.example.fuuplugins.R
+import com.example.fuuplugins.activity.mainActivity.data.massage.MassageBean
+import com.example.fuuplugins.config.dataStore.UserPreferencesKey
+import com.example.fuuplugins.config.dataStore.userDataStore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
-fun PersonPage(){
+fun PersonPage(
+    userDataState: State<UserDataInPersonPage> = remember {
+        mutableStateOf(UserDataInPersonPage())
+    }
+) {
     Column(
         modifier = Modifier
             .fillMaxHeight()
@@ -73,8 +81,12 @@ fun PersonPage(){
             .background(Color.White)
             .padding(vertical = 20.dp, horizontal = 10.dp)
     ){
-        ProfileArea()
-        StatusBarArea()
+        ProfileArea(
+            userDataState
+        )
+        StatusBarArea(
+            userDataState.value.mood
+        )
         MemorandumArea()
         ExamNotificationArea()
         RibbonArea()
@@ -83,21 +95,20 @@ fun PersonPage(){
 
 @Composable
 @Preview
-fun StatusBarArea(){
+fun StatusBarArea(
+    emoji : String = "😀"
+){
     var isClick = remember {
         mutableStateOf(true)
     }
-
-    var emoji = remember {
-        mutableStateOf("😀")
-    }
+    val scope = rememberCoroutineScope()
     Column {
         Text(
-            text = emoji.value,
+            text = emoji,
             modifier = Modifier
-                .padding( top = 10.dp)
+                .padding(top = 10.dp)
                 .clip(RoundedCornerShape(100))
-                .clickable{
+                .clickable {
                     isClick.value = !isClick.value
                 },
             fontSize = 25.sp
@@ -114,12 +125,16 @@ fun StatusBarArea(){
                         Text(
                             text = item,
                             modifier = Modifier
-                                .padding(start = if (index == 0 ) 0.dp else 5.dp)
+                                .padding(start = if (index == 0) 0.dp else 5.dp)
                                 .clip(RoundedCornerShape(100))
                                 .clickable(
                                     enabled = !isClick.value
-                                ){
-                                    emoji.value = item
+                                ) {
+                                    scope.launch {
+                                        FuuApplication.instance.userDataStore.edit { preferences ->
+                                            preferences[UserPreferencesKey.USER_MOOD] = item
+                                        }
+                                    }
                                 },
                             fontSize = 20.sp
                         )
@@ -128,6 +143,11 @@ fun StatusBarArea(){
             }
         }
     }
+    Divider(
+        modifier = Modifier
+            .padding(top = 10.dp),
+        color = Color.LightGray
+    )
 }
 
 val emojiList = listOf(
@@ -168,7 +188,11 @@ val emojiList = listOf(
 
 @Composable
 @Preview
-fun ProfileArea(){
+fun ProfileArea(
+    userDataState: State<UserDataInPersonPage> = remember {
+        mutableStateOf(UserDataInPersonPage())
+    }
+){
     Column (
         modifier = Modifier
             .fillMaxWidth()
@@ -188,35 +212,35 @@ fun ProfileArea(){
         )
 
         Text(
-            text = "NAME 本科生" ,
+            text = userDataState.value.name ,
             fontWeight = FontWeight.Bold,
             fontSize = 30.sp,
             modifier = Modifier
                 .padding( top = 20.dp)
         )
         Text(
-            text = "计算机与大数据学院" ,
+            text = userDataState.value.academy ,
             fontWeight = FontWeight.Bold,
             fontSize = 15.sp,
             modifier = Modifier
                 .padding( top = 10.dp)
         )
         Text(
-            text = "102101624" ,
+            text = userDataState.value.number ,
             fontWeight = FontWeight.Normal,
             fontSize = 15.sp,
             modifier = Modifier
                 .padding( top = 10.dp),
             textDecoration = TextDecoration.Underline
         )
-        Text(
-            text = "2023年第一学期" ,
-            fontWeight = FontWeight(300),
-            fontSize = 15.sp,
-            modifier = Modifier
-                .padding( top = 10.dp),
-            textDecoration = TextDecoration.None
-        )
+//        Text(
+//            text = "2023年第一学期" ,
+//            fontWeight = FontWeight(300),
+//            fontSize = 15.sp,
+//            modifier = Modifier
+//                .padding( top = 10.dp),
+//            textDecoration = TextDecoration.None
+//        )
         Divider(
             modifier = Modifier
                 .padding(top = 10.dp),
@@ -234,12 +258,24 @@ fun DataDisplayArea(){
 @Composable
 @Preview
 fun MemorandumArea(){
+    val massageDao = FuuApplication.db.massageDao()
+    val scope = rememberCoroutineScope()
+    val massages = massageDao.getAll().collectAsStateWithLifecycle(listOf())
     Column {
-        (1..10).forEach {
-            PoopRaft()
+        massages.value.forEach {
+            PoopRaft(it)
         }
         FloatingActionButton(
-            onClick = { /*TODO*/ },
+            onClick = {
+                scope.launch(Dispatchers.IO) {
+                    massageDao.clearAll()
+                    massageDao.insertAll(
+                        MassageBean(
+                            massageId = 0, title = "Damion", time = "2023 01 01", content = "Talena", origin = "Krystalyn"
+                        )
+                    )
+                }
+            },
             modifier = Modifier
                 .padding(top = 20.dp)
                 .align(Alignment.End)
@@ -256,7 +292,9 @@ fun MemorandumArea(){
 
 @Composable
 @Preview
-fun PoopRaft(){
+fun PoopRaft(
+    massageBean: MassageBean = MassageBean()
+) {
     Box(modifier = Modifier
         .padding(top = 20.dp)
         .fillMaxWidth()
@@ -270,7 +308,7 @@ fun PoopRaft(){
             .padding(10.dp)
         ){
             Text(
-                text = "这是一条信息这是一条信息这是一",
+                text = massageBean.title,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 fontSize = 16.sp,
@@ -279,7 +317,21 @@ fun PoopRaft(){
                     .padding(bottom = 10.dp, end = 10.dp)
             )
             Text(
-                text = "这是一条信息 这是一条信息 这是一条信息 这是一条信息 这是一条信息 这是一条信息"
+                text = massageBean.content
+            )
+            Text(
+                text = "来源 ${massageBean.origin}",
+                fontSize = 10.sp,
+                modifier = Modifier
+                    .padding(top = 10.dp)
+                    .align(Alignment.End)
+            )
+            Text(
+                text = massageBean.time,
+                fontSize = 10.sp,
+                modifier = Modifier
+                    .padding(top = 5.dp)
+                    .align(Alignment.End)
             )
         }
         Box(
@@ -288,9 +340,7 @@ fun PoopRaft(){
                 .align(Alignment.BottomEnd)
                 .clip(AbsoluteCutCornerShape(bottomRight = 10.dp))
                 .background(Color(229, 205, 216))
-        ){
-
-        }
+        )
     }
 }
 
@@ -298,6 +348,7 @@ fun PoopRaft(){
 @Composable
 @Preview
 fun ExamNotificationArea(){
+
     Column(){
         repeat(10){
             Row (
@@ -469,3 +520,10 @@ enum class RibbonButton(
     AboutUs(Icons.Filled.Person,"关于我们"),
     SignOut(Icons.Filled.ExitToApp,"退出登录", containerColor = Color(248, 69, 69, 255), contentColor = Color.Black)
 }
+
+data class UserDataInPersonPage(
+    val mood : String = "😀",
+    val number : String = "",
+    val name : String = "" ,
+    val academy : String = ""
+)
