@@ -106,7 +106,9 @@ fun ClassSchedule(
     val sidebarSlideState by viewModel.scrollState.collectAsStateWithLifecycle()
     val courseDialog by viewModel.courseDialog.collectAsStateWithLifecycle()
     val academicYearSelectsDialogState by viewModel.academicYearSelectsDialogState.collectAsStateWithLifecycle()
-
+    LaunchedEffect(viewModel.currentWeek){
+        viewModel.pageState.value.animateScrollToPage(viewModel.currentWeek.value)
+    }
     Column {
         TopAppBar(
             navigationIcon = {

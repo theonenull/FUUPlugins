@@ -39,6 +39,7 @@ import java.util.Calendar
 class ClassScheduleViewModel:ViewModel() {
     private var course = MutableStateFlow<Map<String,List<CourseBean>?>>(hashMapOf())
     var currentYear = MutableStateFlow<String?>(null)
+    var currentWeek = MutableStateFlow<Int>(0)
     val scrollState = MutableStateFlow<ScrollState>(ScrollState(initial = 0))
     val pageState = MutableStateFlow(PagerState())
     val academicYearSelectsDialogState = MutableStateFlow(false)
@@ -85,6 +86,7 @@ class ClassScheduleViewModel:ViewModel() {
                 }
                 .collectLatest { courseData ->
                     val weekData = courseData.weekData
+                    currentWeek.value = weekData.nowWeek
                     getCourses("${weekData.curYear}0${weekData.curXuenian}",courseData.stateHTML)
                         .flatMapConcat {
                             getCoursesHTML(
