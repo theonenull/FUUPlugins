@@ -1,11 +1,12 @@
 package com.example.fuuplugins.activity.mainActivity.viewModel
 
 import android.graphics.BitmapFactory
-import android.util.Log
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.fuuplugins.FuuApplication
 import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository
 import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository.checkTheUserInformation
 import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository.loadCookieData
@@ -13,8 +14,9 @@ import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageR
 import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository.loginStudent
 import com.example.fuuplugins.activity.mainActivity.repositories.LoginResult
 import com.example.fuuplugins.activity.mainActivity.ui.WhetherVerificationCode
+import com.example.fuuplugins.config.dataStore.UserPreferencesKey
+import com.example.fuuplugins.config.dataStore.userDataStore
 import com.example.fuuplugins.util.catchWithMassage
-import com.example.fuuplugins.util.debug
 import com.example.fuuplugins.util.easyToast
 import com.example.fuuplugins.util.flowIO
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +26,9 @@ import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -57,6 +61,18 @@ class LoginPageViewModel: ViewModel() {
         return this.catchWithMassage(block)
     }
 
+    fun checkIsLogin(navigationToMainFramework: () -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val isLogin = FuuApplication.instance.userDataStore.data.map {
+                it[UserPreferencesKey.IS_LOGIN] ?: false
+            }.first()
+            if (isLogin){
+                withContext(Dispatchers.Main){
+                    navigationToMainFramework.invoke()
+                }
+            }
+        }
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun login(
@@ -119,8 +135,8 @@ class LoginPageViewModel: ViewModel() {
                         getVerificationCodeFromNetwork()
                     }
                 }
-                .collect{
-                    when(it){
+                .collect{ loginResult ->
+                    when(loginResult){
                         LoginResult.LoginError->{
                             easyToast("登录失败,请重新登录")
                             loginButtonState.value = true
@@ -129,6 +145,9 @@ class LoginPageViewModel: ViewModel() {
                         }
                         LoginResult.LoginSuccess->{
                             easyToast("登录成功")
+                            FuuApplication.instance.userDataStore.edit {
+                                it[UserPreferencesKey.IS_LOGIN] = true
+                            }
                             withContext(Dispatchers.Main){
                                 loginSuccessful.invoke()
                             }

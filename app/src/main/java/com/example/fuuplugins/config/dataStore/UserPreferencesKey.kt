@@ -1,5 +1,6 @@
 package com.example.fuuplugins.config.dataStore
 
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 
 object UserPreferencesKey {
@@ -9,4 +10,5 @@ object UserPreferencesKey {
     val USER_USERNAME = stringPreferencesKey("user_username")
     val USER_PASSWORD = stringPreferencesKey("user_password")
     val USER_ACADEMY = stringPreferencesKey("user_academy")
+    val IS_LOGIN = booleanPreferencesKey("IS_LOGIN")
 }

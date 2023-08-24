@@ -41,7 +41,7 @@ object BlockLoginPageRepository : LoginPageRepository{
             .readTimeout(10, TimeUnit.SECONDS)
             .build()
     }
-    fun getJwchApi(): JwchLoginService {
+    private fun getJwchApi(): JwchLoginService {
         if (jwchLoginServiceInstance == null) {
             val client = client.newBuilder().cookieJar(object : CookieJar {
                 override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
