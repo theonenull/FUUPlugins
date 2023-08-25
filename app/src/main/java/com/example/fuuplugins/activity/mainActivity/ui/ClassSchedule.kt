@@ -439,11 +439,14 @@ fun ClassDialog(
                 },
                 modifier = Modifier
                     .height(50.dp)
+                    .background(Color(215, 215, 237))
             )
             Text(
                 text = courseBean.kcName,
                 color = Color.Blue,
-                style = TextStyle(fontSize = 30.sp)
+                style = TextStyle(fontSize = 27.sp),
+                modifier = Modifier
+                    .padding(horizontal = 10.dp)
             )
             LazyColumn(
                 modifier = Modifier
@@ -616,7 +619,7 @@ fun AcademicYearSelectsDialog(
     commit : (String) -> Unit  = {}
 ){
     var data by remember {
-        mutableStateOf(list[0])
+        mutableStateOf( if(list.isNotEmpty()) list[0] else "null" )
     }
     val state = rememberLazyListState()
 
@@ -659,6 +662,7 @@ fun AcademicYearSelectsDialog(
                     commit.invoke(data)
                     onDismissRequest.invoke()
                 },
+                enabled = data != "null",
                 modifier = Modifier
                     .padding(top = 20.dp),
                 contentPadding = PaddingValues(vertical = 10.dp, horizontal = 30.dp)
@@ -667,4 +671,11 @@ fun AcademicYearSelectsDialog(
             }
         }
     }
+}
+
+
+@Composable
+@Preview
+fun ToRefreshDialog(){
+
 }
