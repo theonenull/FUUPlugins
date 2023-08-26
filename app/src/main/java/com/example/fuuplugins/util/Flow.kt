@@ -1,5 +1,6 @@
 package com.example.fuuplugins.util
 
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
@@ -18,7 +19,7 @@ fun <T> Flow<T>.flowUnconfined() : Flow<T>{
 
 fun <T>Flow<T>.catchWithMassage(block:FlowCollector<T>.(Throwable)->Unit) : Flow<T>{
     return this.catch {
-        error(msg = "flow catch",throwable = it)
+        Log.e("sss",it.toString())
         block.invoke(this,it)
     }
 }

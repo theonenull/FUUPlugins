@@ -17,6 +17,12 @@ interface CourseDao {
     @Insert
     fun insertAll(vararg users: CourseBean)
 
+
+    @Insert
+    @JvmSuppressWildcards
+    fun insertCourses(users: List<CourseBean>)
+
+
     @Query("DELETE FROM $CourseDaoTableName")
     fun clearAll()
 

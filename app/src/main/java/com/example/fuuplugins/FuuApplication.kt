@@ -23,5 +23,4 @@ class FuuApplication: Application() {
         super.onTerminate()
         db.close()
     }
-
 }

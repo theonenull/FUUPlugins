@@ -50,7 +50,7 @@ object ClassScheduleRepository {
         }
         return othersApiServiceInstance!!
     }
-    suspend fun getJwchCourseApi(): JwchCourseService {
+    private suspend fun getJwchCourseApi(): JwchCourseService {
         if (jwchCourseServiceInstance == null) {
             val client = client.newBuilder().cookieJar(object : CookieJar {
                 override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
@@ -70,9 +70,6 @@ object ClassScheduleRepository {
         }
         return jwchCourseServiceInstance!!
     }
-
-
-
 
     suspend fun getCourseStateHTML(): Flow<String> {
         return flow {

@@ -21,7 +21,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.fuuplugins.FuuApplication
 import com.example.fuuplugins.activity.mainActivity.viewModel.LoginPageViewModel
+import com.example.fuuplugins.config.dataStore.UserPreferencesKey
+import com.example.fuuplugins.config.dataStore.userDataStore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 @Composable
@@ -31,9 +39,19 @@ fun MainActivityUi(
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "startPage") {
         composable("startPage") {
-            StartPage(){
-                navController.navigate("login"){
-                    popUpTo("startPage") { inclusive = true }
+            val scope = rememberCoroutineScope()
+            StartPage{
+                scope.launch(Dispatchers.IO){
+                    val isLogin = FuuApplication.instance.userDataStore.data.map {
+                        it[UserPreferencesKey.IS_LOGIN]?:false
+                    }.first()
+                    withContext(Dispatchers.Main){
+                        navController.navigate(
+                            if(isLogin) "mainFramework" else "login"
+                        ) {
+                            popUpTo("startPage") { inclusive = true }
+                        }
+                    }
                 }
             }
         }

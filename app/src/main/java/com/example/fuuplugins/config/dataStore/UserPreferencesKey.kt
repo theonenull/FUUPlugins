@@ -11,4 +11,5 @@ object UserPreferencesKey {
     val USER_PASSWORD = stringPreferencesKey("user_password")
     val USER_ACADEMY = stringPreferencesKey("user_academy")
     val IS_LOGIN = booleanPreferencesKey("IS_LOGIN")
+    val DATA_VALIDITY_PERIOD = stringPreferencesKey("DATA_VALIDITY_PERIOD")
 }

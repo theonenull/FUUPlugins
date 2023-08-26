@@ -1,12 +1,9 @@
 package com.example.fuuplugins.activity.mainActivity.ui
 
-import android.os.Debug
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,7 +39,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -65,36 +61,21 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fuuplugins.activity.mainActivity.data.course.CourseBean
 import com.example.fuuplugins.config.LightColors
 import com.example.fuuplugins.util.debug
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlin.random.Random
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.compose.runtime.State
+import androidx.compose.ui.graphics.ImageBitmap
+import com.example.material.ButtonState
+import com.example.material.LoadableButton
 import com.example.material.ScrollSelection
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
@@ -106,6 +87,8 @@ fun ClassSchedule(
     val sidebarSlideState by viewModel.scrollState.collectAsStateWithLifecycle()
     val courseDialog by viewModel.courseDialog.collectAsStateWithLifecycle()
     val academicYearSelectsDialogState by viewModel.academicYearSelectsDialogState.collectAsStateWithLifecycle()
+    val refreshDialogState by viewModel.refreshDialog.collectAsStateWithLifecycle()
+    val refreshDialogVerificationCode = viewModel.refreshDialogVerificationCode.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel.currentWeek){
         viewModel.pageState.value.animateScrollToPage(viewModel.currentWeek.value)
     }
@@ -124,7 +107,7 @@ fun ClassSchedule(
                     Icon(imageVector = Icons.Filled.AccountCircle, contentDescription = null)
                 }
                 IconButton(onClick = {
-                    openDrawer.invoke()
+                    viewModel.refreshCourse()
                 }) {
                     Icon(imageVector = Icons.Filled.Refresh, contentDescription = null)
                 }
@@ -266,9 +249,30 @@ fun ClassSchedule(
             commit = {
                 viewModel.currentYear.value = it
             },
-            list = viewModel.yearOptions.collectAsStateWithLifecycle().value?: listOf()
+            list = viewModel.yearOptions.collectAsStateWithLifecycle(listOf()).value.map {
+                year -> year.yearOptionsName
+            }
         )
     }
+    if(refreshDialogState){
+        val text = remember {
+            mutableStateOf("")
+        }
+        ToRefreshDialog(
+            verificationCode = refreshDialogVerificationCode,
+            onDismissRequest = {
+                viewModel.refreshDialog.value = false
+            },
+            verificationCodeState = viewModel.refreshVerificationCodeState.collectAsStateWithLifecycle(),
+            verificationCodeOnValueChange = { text.value = it },
+            verificationCodeText = text,
+            retryGetVerificationCode = { viewModel.refreshCourse() },
+            refresh = { viewModel.refreshWithVerificationCode(text.value) },
+            buttonState = viewModel.refreshButtonState.collectAsStateWithLifecycle(),
+            clickAble = viewModel.refreshClickAble.collectAsStateWithLifecycle(),
+        )
+    }
+
 }
 
 @Composable
@@ -508,7 +512,9 @@ fun ClassDialog(
                         .weight(1f)
                         .height(40.dp)
                 ) {
-
+                    val data = remember {
+                        androidx.compose.animation.core.Animatable(0f)
+                    }
                 }
             }
         }
@@ -618,9 +624,11 @@ fun AcademicYearSelectsDialog(
     list: List<String> = listOf("1","2","3"),
     commit : (String) -> Unit  = {}
 ){
+
     var data by remember {
         mutableStateOf( if(list.isNotEmpty()) list[0] else "null" )
     }
+
     val state = rememberLazyListState()
 
     Dialog(
@@ -676,6 +684,60 @@ fun AcademicYearSelectsDialog(
 
 @Composable
 @Preview
-fun ToRefreshDialog(){
+fun ToRefreshDialog(
+    onDismissRequest : ()->Unit = {},
+    verificationCodeState:State<WhetherVerificationCode> = remember {
+        mutableStateOf(WhetherVerificationCode.FAIL)
+    },
+    verificationCodeOnValueChange:(String) ->Unit = {
 
+    },
+    verificationCodeText:State<String> =  remember {
+        mutableStateOf("")
+    },
+    verificationCode: State<ImageBitmap?> = remember {
+        mutableStateOf(null)
+    },
+    retryGetVerificationCode: ()->Unit={},
+    refresh: ()->Unit={},
+    buttonState: State<ButtonState> = remember {
+        mutableStateOf(ButtonState.Normal)
+    },
+    clickAble : State<Boolean> = remember {
+        mutableStateOf(false)
+    }
+){
+    Dialog(onDismissRequest = onDismissRequest ) {
+        Column(
+            modifier = Modifier
+                .fillMaxHeight(0.7f)
+                .verticalScroll(rememberScrollState())
+                .background(Color.White),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CaptchaLine(
+                verificationCodeState = verificationCodeState,
+                verificationCodeOnValueChange = verificationCodeOnValueChange,
+                verificationCodeText = verificationCodeText,
+                verificationCode = verificationCode,
+                retryGetVerificationCode = retryGetVerificationCode
+            )
+            LoadableButton(
+                modifier = Modifier
+                    .padding(top = 20.dp),
+                onClick = refresh,
+                buttonState = buttonState.value,
+                normalContent = {
+                    Text(text = "Normal")
+                },
+                loadingContent = {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .fillMaxSize()
+                    )
+                }
+            )
+        }
+    }
 }
