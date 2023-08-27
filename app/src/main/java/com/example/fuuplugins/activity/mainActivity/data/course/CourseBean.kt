@@ -33,3 +33,8 @@ data class CourseBean(
     var priority: Long = 0,
     var type: Int = 0
 )
+
+fun CourseBean.computeTheXueNian():String{
+
+    return "${this.kcYear}0${this.kcXuenian}}"
+}

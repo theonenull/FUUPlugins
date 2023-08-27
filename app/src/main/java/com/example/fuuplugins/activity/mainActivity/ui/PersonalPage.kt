@@ -38,12 +38,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -65,12 +67,18 @@ import com.example.fuuplugins.config.dataStore.userDataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 @Preview
 fun PersonPage(
     userDataState: State<UserDataInPersonPage> = remember {
         mutableStateOf(UserDataInPersonPage())
+    },
+    massageDataFlowFromCourse : State<List<MassageBean>> = remember {
+        mutableStateOf(listOf())
+    },
+    massageDataFlowFromMassageDao : State<List<MassageBean>> = remember {
+        mutableStateOf(listOf())
     }
 ) {
     Column(
@@ -87,7 +95,14 @@ fun PersonPage(
         StatusBarArea(
             userDataState.value.mood
         )
-        MemorandumArea()
+        val massageData = remember(massageDataFlowFromMassageDao,massageDataFlowFromCourse) {
+            derivedStateOf {
+                massageDataFlowFromMassageDao.value + massageDataFlowFromCourse.value
+            }
+        }
+        MemorandumArea(
+            massageData
+        )
         ExamNotificationArea()
         RibbonArea()
     }
@@ -204,9 +219,10 @@ fun ProfileArea(
             painter = painterResource(id = R.drawable.img),
             contentDescription = null,
             modifier = Modifier
-                .fillMaxWidth(0.4f)
+                .fillMaxWidth(1f)
                 .aspectRatio(1f)
-                .clip(RoundedCornerShape(100)),
+                .clip(RoundedCornerShape(20.dp))
+                .shadow(1.dp),
             contentScale = ContentScale.FillBounds,
             alignment = Alignment.Center,
         )
@@ -257,12 +273,15 @@ fun DataDisplayArea(){
 
 @Composable
 @Preview
-fun MemorandumArea(){
+fun MemorandumArea(
+    userDataState: State<List<MassageBean>> = remember {
+        mutableStateOf(listOf())
+    }
+){
     val massageDao = FuuApplication.db.massageDao()
     val scope = rememberCoroutineScope()
-    val massages = massageDao.getAll().collectAsStateWithLifecycle(listOf())
     Column {
-        massages.value.forEach {
+        userDataState.value.forEach {
             PoopRaft(it)
         }
         FloatingActionButton(

@@ -64,7 +64,7 @@ class LoginPageViewModel: ViewModel() {
     fun checkIsLogin(navigationToMainFramework: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             val isLogin = FuuApplication.instance.userDataStore.data.map {
-                it[UserPreferencesKey.IS_LOGIN] ?: false
+                it[UserPreferencesKey.USER_IS_LOGIN] ?: false
             }.first()
             if (isLogin){
                 withContext(Dispatchers.Main){
@@ -146,7 +146,7 @@ class LoginPageViewModel: ViewModel() {
                         LoginResult.LoginSuccess->{
                             easyToast("登录成功")
                             FuuApplication.instance.userDataStore.edit {
-                                it[UserPreferencesKey.IS_LOGIN] = true
+                                it[UserPreferencesKey.USER_IS_LOGIN] = true
                             }
                             withContext(Dispatchers.Main){
                                 loginSuccessful.invoke()

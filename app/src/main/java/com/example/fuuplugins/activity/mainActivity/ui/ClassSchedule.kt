@@ -1,5 +1,6 @@
 package com.example.fuuplugins.activity.mainActivity.ui
 
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
@@ -60,7 +61,6 @@ import com.example.fuuplugins.activity.mainActivity.viewModel.ClassScheduleViewM
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fuuplugins.activity.mainActivity.data.course.CourseBean
 import com.example.fuuplugins.config.LightColors
-import com.example.fuuplugins.util.debug
 import kotlin.random.Random
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -70,12 +70,16 @@ import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.TopAppBarColors
+import androidx.compose.material3.TopAppBarDefaults
 
 import androidx.compose.runtime.State
 import androidx.compose.ui.graphics.ImageBitmap
+import com.example.fuuplugins.activity.mainActivity.data.yearOptions.YearOptionsBean
 import com.example.material.ButtonState
 import com.example.material.LoadableButton
 import com.example.material.ScrollSelection
+import kotlinx.coroutines.flow.MutableStateFlow
 
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
@@ -89,6 +93,7 @@ fun ClassSchedule(
     val academicYearSelectsDialogState by viewModel.academicYearSelectsDialogState.collectAsStateWithLifecycle()
     val refreshDialogState by viewModel.refreshDialog.collectAsStateWithLifecycle()
     val refreshDialogVerificationCode = viewModel.refreshDialogVerificationCode.collectAsStateWithLifecycle()
+    val yearOptionsBean by viewModel.yearOptions.collectAsStateWithLifecycle(listOf())
     LaunchedEffect(viewModel.currentWeek){
         viewModel.pageState.value.animateScrollToPage(viewModel.currentWeek.value)
     }
@@ -247,11 +252,9 @@ fun ClassSchedule(
                 viewModel.academicYearSelectsDialogState.value = false
             },
             commit = {
-                viewModel.currentYear.value = it
+                viewModel.changeCurrentYear(it)
             },
-            list = viewModel.yearOptions.collectAsStateWithLifecycle(listOf()).value.map {
-                year -> year.yearOptionsName
-            }
+            list = yearOptionsBean
         )
     }
     if(refreshDialogState){
@@ -415,7 +418,7 @@ fun SidebarPreview(){
 @Composable
 fun ClassDialog(
     courseBean: CourseBean,
-    backgroundColor: Color = Color(0xFFCCCCCC),
+    backgroundColor: Color = Color(217, 217, 239),
     onDismissRequest: () -> Unit,
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
@@ -423,6 +426,7 @@ fun ClassDialog(
             Modifier
                 .clip(RoundedCornerShape(10.dp))
                 .fillMaxWidth()
+                .fillMaxHeight(0.7f)
                 .background(backgroundColor),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -442,19 +446,25 @@ fun ClassDialog(
                     }
                 },
                 modifier = Modifier
-                    .height(50.dp)
-                    .background(Color(215, 215, 237))
+                    .height(50.dp),
+                colors = TopAppBarDefaults.smallTopAppBarColors(
+                    backgroundColor,backgroundColor,backgroundColor,backgroundColor,backgroundColor
+                )
             )
             Text(
                 text = courseBean.kcName,
                 color = Color.Blue,
                 style = TextStyle(fontSize = 27.sp),
                 modifier = Modifier
-                    .padding(horizontal = 10.dp)
+                    .background(backgroundColor)
+                    .padding(horizontal = 10.dp),
+                textAlign = TextAlign.Center
             )
             LazyColumn(
                 modifier = Modifier
+                    .background(backgroundColor)
                     .padding(vertical = 20.dp)
+                    .weight(1f)
                     .fillMaxWidth(0.7f)
             ){
                 ClassScheduleNotificationDisplayProperties.forEachIndexed { index, item ->
@@ -493,6 +503,8 @@ fun ClassDialog(
             }
             Row (
                 modifier = Modifier
+                    .padding(bottom = 20.dp)
+                    .background(backgroundColor)
                     .fillMaxWidth()
                     .wrapContentHeight()
                     .padding(horizontal = 40.dp, vertical = 10.dp)
@@ -501,7 +513,9 @@ fun ClassDialog(
                     onClick = { /*TODO*/ },
                     modifier = Modifier
                         .weight(1f)
-                        .height(40.dp)
+                        .height(40.dp),
+                    contentColor = backgroundColor,
+                    containerColor = backgroundColor
                 ) {
 
                 }
@@ -510,7 +524,9 @@ fun ClassDialog(
                     onClick = { /*TODO*/ },
                     modifier = Modifier
                         .weight(1f)
-                        .height(40.dp)
+                        .height(40.dp),
+                    contentColor = backgroundColor,
+                    containerColor = backgroundColor
                 ) {
                     val data = remember {
                         androidx.compose.animation.core.Animatable(0f)
@@ -618,15 +634,20 @@ enum class WeekDay(val chineseName: String, val englishName: String) {
 }
 
 @Composable
-@Preview
 fun AcademicYearSelectsDialog(
-    onDismissRequest : ()->Unit = {},
-    list: List<String> = listOf("1","2","3"),
-    commit : (String) -> Unit  = {}
+    onDismissRequest: ()->Unit = {},
+    list: List<YearOptionsBean> = listOf("1","2","3")
+        .map { year ->
+            YearOptionsBean(
+                yearOptionsName = year,
+            )
+        },
+    commit: (String) -> Unit
 ){
+    var data = MutableStateFlow("null")
 
-    var data by remember {
-        mutableStateOf( if(list.isNotEmpty()) list[0] else "null" )
+    LaunchedEffect(Unit){
+        data.value = if(list.isNotEmpty()) list[0].yearOptionsName else "null"
     }
 
     val state = rememberLazyListState()
@@ -650,7 +671,9 @@ fun AcademicYearSelectsDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight(),
-                textList = list,
+                textList = list.map {
+                     year -> year.yearOptionsName
+                },
                 backgroundContent = {
                     Box(
                         modifier = Modifier
@@ -660,17 +683,18 @@ fun AcademicYearSelectsDialog(
                     )
                 },
                 onItemSelected = { _ ,item->
-                    data = item
-                    debug(item)
+                    Log.d("data commit",data.value)
+                    data.value = item
                 },
                 state = state
             )
             ElevatedButton(
                 onClick = {
-                    commit.invoke(data)
+                    Log.d("data value",data.value)
+                    commit.invoke(data.value)
                     onDismissRequest.invoke()
                 },
-                enabled = data != "null",
+                enabled = data.collectAsStateWithLifecycle().value != "null",
                 modifier = Modifier
                     .padding(top = 20.dp),
                 contentPadding = PaddingValues(vertical = 10.dp, horizontal = 30.dp)

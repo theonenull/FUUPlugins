@@ -1,11 +1,17 @@
 package com.example.fuuplugins.util
 
 import android.util.Log
+import androidx.datastore.preferences.core.Preferences
+import com.example.fuuplugins.FuuApplication
+import com.example.fuuplugins.config.dataStore.UserPreferencesKey
+import com.example.fuuplugins.config.dataStore.userDataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+
 
 fun <T> Flow<T>.flowIO() : Flow<T>{
     return this.flowOn(Dispatchers.IO)
@@ -23,3 +29,6 @@ fun <T>Flow<T>.catchWithMassage(block:FlowCollector<T>.(Throwable)->Unit) : Flow
         block.invoke(this,it)
     }
 }
+
+
+

@@ -13,25 +13,32 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fuuplugins.FuuApplication
 import com.example.fuuplugins.activity.mainActivity.data.course.CourseBean
+import com.example.fuuplugins.activity.mainActivity.data.course.computeTheXueNian
 import com.example.fuuplugins.activity.mainActivity.data.yearOptions.YearOptionsBean
 import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository
 import com.example.fuuplugins.activity.mainActivity.repositories.ClassScheduleRepository
 import com.example.fuuplugins.activity.mainActivity.repositories.LoginResult
 import com.example.fuuplugins.activity.mainActivity.repositories.WeekData
 import com.example.fuuplugins.activity.mainActivity.ui.WhetherVerificationCode
+import com.example.fuuplugins.config.dataStore.DataManagePreferencesKey
 import com.example.fuuplugins.config.dataStore.UserPreferencesKey
+import com.example.fuuplugins.config.dataStore.getDataManageDataStore
+import com.example.fuuplugins.config.dataStore.setDataManageDataStore
+import com.example.fuuplugins.config.dataStore.setYearWeek
 import com.example.fuuplugins.config.dataStore.userDataStore
 import com.example.fuuplugins.util.catchWithMassage
 import com.example.fuuplugins.util.easyToast
 import com.example.fuuplugins.util.flowIO
+import com.example.fuuplugins.util.warn
 import com.example.material.ButtonState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.map
@@ -39,7 +46,6 @@ import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.zip
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
@@ -54,11 +60,13 @@ class ClassScheduleViewModel:ViewModel() {
     private var course = FuuApplication.db.courseDao().getAll()
     var currentYear = MutableStateFlow<String?>(null)
     var currentWeek = MutableStateFlow<Int>(0)
+    val yearOptions = FuuApplication.db.yearOptionsDao().getAll()
+
     val scrollState = MutableStateFlow<ScrollState>(ScrollState(initial = 0))
     val pageState = MutableStateFlow(PagerState())
     val academicYearSelectsDialogState = MutableStateFlow(false)
     val courseDialog = MutableStateFlow<CourseBean?>(null)
-    val yearOptions = FuuApplication.db.yearOptionsDao().getAll()
+
 
     val refreshDialog = MutableStateFlow(false)
     var refreshDialogVerificationCode =  MutableStateFlow<ImageBitmap?>(null)
@@ -68,30 +76,27 @@ class ClassScheduleViewModel:ViewModel() {
 
 
     val courseForShow = currentYear
-        .zip(course){
+        .combine(course){
             currentYear,course -> course.filter {
                 "${it.kcYear}0${it.kcXuenian}" == currentYear
             }
         }
-        .filter { it ->
-            it.forEach {
-                Log.d("Test","Test $it")
-            }
-            true
-        }
         .stateIn(
             viewModelScope,
             SharingStarted.Lazily,
-            null
+            listOf()
         )
 
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             ClassScheduleRepository.getWeek()
                 .collectLatest {
+                    setYearWeek(
+                        year = it.curYear.toString(), week = it.nowWeek.toString(), xuenian = it.curXuenian.toString()
+                    )
                     currentYear.value = it.getXueQi()
-                    currentWeek.value = it.nowWeek
+                    currentWeek.value = it.nowWeek.toString().toInt()
                 }
             if(checkCookieEffectiveness()){
                 getCourseFromNetwork()
@@ -111,7 +116,7 @@ class ClassScheduleViewModel:ViewModel() {
                 }
                 .collectLatest { courseData ->
                     val weekData = courseData.weekData
-                    currentWeek.value = weekData.nowWeek
+                    setDataManageDataStore(DataManagePreferencesKey.DATA_MANAGE_CURRENT_WEEK,weekData.nowWeek.toString())
                     getCourses("${weekData.curYear}0${weekData.curXuenian}",courseData.stateHTML)
                         .flatMapConcat {
                             getCoursesHTML(
@@ -132,7 +137,11 @@ class ClassScheduleViewModel:ViewModel() {
                         }
                         .collectLatest { initCourseBean ->
                             FuuApplication.db.courseDao().insertCourses(initCourseBean)
-                            currentYear.value = courseData.weekData.getXueQi()
+                            courseData.weekData.let{
+                                setYearWeek(
+                                    year = it.curYear.toString(), week = it.nowWeek.toString(), xuenian = it.curXuenian.toString()
+                                )
+                            }
                             getOtherCourseFromNetwork()
                         }
                 }
@@ -147,7 +156,7 @@ class ClassScheduleViewModel:ViewModel() {
             with(ClassScheduleRepository){
                 yearOptions.first().let { list ->
                     list.filter {
-                        it.yearOptionsName != currentYear.value
+                        it.yearOptionsName != getDataManageDataStore(DataManagePreferencesKey.DATA_MANAGE_CURRENT_ACADEMIC_YEAR,"").first()
                     }.map{
                         it.yearOptionsName
                     }.forEach { xq->
@@ -170,7 +179,7 @@ class ClassScheduleViewModel:ViewModel() {
                             }
                             .collectLatest { initCourseBean ->
                                 FuuApplication.instance.userDataStore.edit {
-                                    it[UserPreferencesKey.DATA_VALIDITY_PERIOD] = Clock.System.now().toString()
+                                    it[UserPreferencesKey.USER_DATA_VALIDITY_PERIOD] = Clock.System.now().toString()
                                 }
                                 FuuApplication.db.courseDao().insertCourses(initCourseBean)
                             }
@@ -264,7 +273,7 @@ class ClassScheduleViewModel:ViewModel() {
                         LoginResult.LoginSuccess->{
                             easyToast("刷新成功")
                             FuuApplication.instance.userDataStore.edit {
-                                it[UserPreferencesKey.DATA_VALIDITY_PERIOD] = Clock.System.now().toString()
+                                it[UserPreferencesKey.USER_DATA_VALIDITY_PERIOD] = Clock.System.now().toString()
                             }
                         }
                     }
@@ -273,6 +282,11 @@ class ClassScheduleViewModel:ViewModel() {
             }
         }
 
+    fun changeCurrentYear(newValue:String){
+        viewModelScope.launch {
+            currentYear.emit(newValue)
+        }
+    }
     override fun onCleared() {
         super.onCleared()
         println("over_v")
@@ -285,7 +299,7 @@ class ClassScheduleViewModel:ViewModel() {
 
     suspend fun checkCookieEffectiveness():Boolean{
         val currentTime = (FuuApplication.instance.userDataStore.data.map {
-            it[UserPreferencesKey.DATA_VALIDITY_PERIOD]
+            it[UserPreferencesKey.USER_DATA_VALIDITY_PERIOD]
         }.first() ?: "")
         if(currentTime == ""){
             return true

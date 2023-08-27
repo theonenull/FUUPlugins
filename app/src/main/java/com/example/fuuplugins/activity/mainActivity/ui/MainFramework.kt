@@ -63,7 +63,9 @@ fun MainFramework(
             gesturesEnabled = gesturesEnabled,
             drawerContent  = {
                 PersonPage(
-                    viewModel.personDataFlow.collectAsStateWithLifecycle()
+                    viewModel.personDataFlow.collectAsStateWithLifecycle(),
+                    viewModel.massageDataFlowFromCourse.collectAsStateWithLifecycle(initialValue = emptyList()),
+                    viewModel.massageDataFlowFromMassageDao.collectAsStateWithLifecycle(initialValue = emptyList()),
                 )
             },
             content = {
