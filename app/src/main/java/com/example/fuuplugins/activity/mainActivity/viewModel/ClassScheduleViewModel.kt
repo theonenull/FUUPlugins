@@ -59,7 +59,7 @@ class ClassScheduleViewModel:ViewModel() {
 
     private var course = FuuApplication.db.courseDao().getAll()
     var currentYear = MutableStateFlow<String?>(null)
-    var currentWeek = MutableStateFlow<Int>(0)
+    var currentWeek = MutableStateFlow<Int>(1)
     val yearOptions = FuuApplication.db.yearOptionsDao().getAll()
 
     val scrollState = MutableStateFlow<ScrollState>(ScrollState(initial = 0))

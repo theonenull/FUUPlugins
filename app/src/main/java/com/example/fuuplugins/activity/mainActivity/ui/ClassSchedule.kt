@@ -95,7 +95,7 @@ fun ClassSchedule(
     val refreshDialogVerificationCode = viewModel.refreshDialogVerificationCode.collectAsStateWithLifecycle()
     val yearOptionsBean by viewModel.yearOptions.collectAsStateWithLifecycle(listOf())
     LaunchedEffect(viewModel.currentWeek){
-        viewModel.pageState.value.animateScrollToPage(viewModel.currentWeek.value)
+        viewModel.pageState.value.animateScrollToPage(viewModel.currentWeek.value - 1)
     }
     Column {
         TopAppBar(
@@ -205,7 +205,7 @@ fun ClassSchedule(
                                 viewModel.courseForShow.collectAsStateWithLifecycle().value?.let { courseBeans ->
                                     courseBeans
                                         .filter {
-                                            it.kcStartWeek <= page+1 && it.kcEndWeek >= page+1
+                                            it.kcStartWeek <= page+1 && it.kcEndWeek >= page+1 && (it.kcIsDouble == ((page+1)%2 == 0) || it.kcIsSingle == ((page+1)%2 == 1))
                                         }
                                         .filter { courseBeanData ->
                                             courseBeanData.kcWeekend == weekIndex + 1
@@ -448,7 +448,11 @@ fun ClassDialog(
                 modifier = Modifier
                     .height(50.dp),
                 colors = TopAppBarDefaults.smallTopAppBarColors(
-                    backgroundColor,backgroundColor,backgroundColor,backgroundColor,backgroundColor
+                    backgroundColor,
+                    backgroundColor,
+                    backgroundColor,
+                    backgroundColor,
+                    Color.Black,
                 )
             )
             Text(
