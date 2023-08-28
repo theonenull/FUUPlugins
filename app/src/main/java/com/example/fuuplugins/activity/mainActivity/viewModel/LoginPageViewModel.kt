@@ -15,6 +15,7 @@ import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageR
 import com.example.fuuplugins.activity.mainActivity.repositories.LoginResult
 import com.example.fuuplugins.activity.mainActivity.ui.WhetherVerificationCode
 import com.example.fuuplugins.config.dataStore.UserPreferencesKey
+import com.example.fuuplugins.config.dataStore.setUserDataStore
 import com.example.fuuplugins.config.dataStore.userDataStore
 import com.example.fuuplugins.util.catchWithMassage
 import com.example.fuuplugins.util.easyToast
@@ -79,9 +80,12 @@ class LoginPageViewModel: ViewModel() {
         loginSuccessful:() -> Unit = {},
         loginFailed :() -> Unit = {}
     ){
-        loginButtonState.value = false
-        val username = usernameState.value
         viewModelScope.launch(Dispatchers.IO) {
+            loginButtonState.value = false
+            val username = usernameState.value
+            val password = passwordState.value
+            setUserDataStore(UserPreferencesKey.USER_USERNAME,username)
+            setUserDataStore(UserPreferencesKey.USER_PASSWORD,password)
             loginStudent(
                 pass = passwordState.value,
                 user = usernameState.value,
@@ -105,24 +109,24 @@ class LoginPageViewModel: ViewModel() {
                     ).retryWhen{ error,tryTime ->
                         error.message == "获取account失败" && tryTime <= 3
                     }
-                        .catchWithMassage {
-                            if(it.message == "获取account失败"){
-                                easyToast(it.message.toString())
-                            }
-                            else{
-                                easyToast(it.message.toString())
-                            }
-                        }.flowIO()
+                            .catchWithMassage {
+                                if(it.message == "获取account失败"){
+                                    easyToast(it.message.toString())
+                                }
+                                else{
+                                    easyToast(it.message.toString())
+                                }
+                            }.flowIO()
                 }
                 .flatMapConcat {
                     loadCookieData(
                         queryMap = it,
                         user = username
                     )
-                        .catchWithMassage {
-                            loginButtonState.value = true
-                            getVerificationCodeFromNetwork()
-                        }
+                    .catchWithMassage {
+                        loginButtonState.value = true
+                        getVerificationCodeFromNetwork()
+                    }
                 }
                 .flatMapConcat {
                     checkTheUserInformation(

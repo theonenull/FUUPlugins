@@ -18,3 +18,9 @@ fun ViewModel.normalToast(msg:String,duration:Int){
         Toast.makeText(FuuApplication.instance,msg, duration).show()
     }
 }
+
+fun ViewModel.easySnackBar(msg:String){
+    viewModelScope.launch(Dispatchers.Main) {
+
+    }
+}

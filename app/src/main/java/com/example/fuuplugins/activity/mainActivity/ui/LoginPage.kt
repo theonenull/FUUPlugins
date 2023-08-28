@@ -72,7 +72,9 @@ fun LoginPage (
         retryGetVerificationCode = {
             viewModel.getVerificationCodeFromNetwork()
         },
-        login = { viewModel.login(loginSuccessful = navigationToMainFramework, loginFailed = { -> }) },
+        login = {
+            viewModel.login(loginSuccessful = navigationToMainFramework, loginFailed = { -> })
+                },
     )
 }
 

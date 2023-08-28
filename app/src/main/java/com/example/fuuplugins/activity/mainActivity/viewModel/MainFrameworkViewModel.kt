@@ -3,8 +3,7 @@ package com.example.fuuplugins.activity.mainActivity.viewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fuuplugins.FuuApplication
-import com.example.fuuplugins.activity.mainActivity.data.course.computeTheXueNian
-import com.example.fuuplugins.activity.mainActivity.data.massage.MassageBean
+import com.example.fuuplugins.activity.mainActivity.data.bean.MassageBean
 import com.example.fuuplugins.activity.mainActivity.ui.UserDataInPersonPage
 import com.example.fuuplugins.config.dataStore.DataManagePreferencesKey
 import com.example.fuuplugins.config.dataStore.UserPreferencesKey
@@ -47,4 +46,6 @@ class MainFrameworkViewModel: ViewModel() {
         }
     }
     val massageDataFlowFromMassageDao = FuuApplication.db.massageDao().getAll()
+
+    val examDataFlowFromExamDao = FuuApplication.db.examDao().getAll()
 }

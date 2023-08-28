@@ -59,7 +59,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.fuuplugins.activity.mainActivity.viewModel.ClassScheduleViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.fuuplugins.activity.mainActivity.data.course.CourseBean
+import com.example.fuuplugins.activity.mainActivity.data.bean.CourseBean
 import com.example.fuuplugins.config.LightColors
 import kotlin.random.Random
 import androidx.compose.foundation.layout.PaddingValues
@@ -70,12 +70,11 @@ import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 
 import androidx.compose.runtime.State
 import androidx.compose.ui.graphics.ImageBitmap
-import com.example.fuuplugins.activity.mainActivity.data.yearOptions.YearOptionsBean
+import com.example.fuuplugins.activity.mainActivity.data.bean.YearOptionsBean
 import com.example.material.ButtonState
 import com.example.material.LoadableButton
 import com.example.material.ScrollSelection
@@ -532,9 +531,7 @@ fun ClassDialog(
                     contentColor = backgroundColor,
                     containerColor = backgroundColor
                 ) {
-                    val data = remember {
-                        androidx.compose.animation.core.Animatable(0f)
-                    }
+
                 }
             }
         }
@@ -739,7 +736,9 @@ fun ToRefreshDialog(
         Column(
             modifier = Modifier
                 .fillMaxHeight(0.7f)
+                .clip(RoundedCornerShape(10.dp))
                 .verticalScroll(rememberScrollState())
+                .padding(10.dp)
                 .background(Color.White),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -759,10 +758,12 @@ fun ToRefreshDialog(
                 normalContent = {
                     Text(text = "Normal")
                 },
+                enabled = buttonState.value == ButtonState.Normal && verificationCodeText.value!="",
                 loadingContent = {
                     CircularProgressIndicator(
                         modifier = Modifier
                             .fillMaxSize()
+                            .padding(10.dp)
                     )
                 }
             )

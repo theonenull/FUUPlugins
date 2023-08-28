@@ -68,7 +68,7 @@ object BlockLoginPageRepository : LoginPageRepository{
             emit(
                 inputString
             )
-        }
+        }.flowIO()
     }
 
     //登录 step1
@@ -147,7 +147,7 @@ object BlockLoginPageRepository : LoginPageRepository{
                 //400 重新登录一次试试看
                 throw Throwable("获取account失败")
             }
-        }
+        }.flowIO()
     }
 
     //Step4 用loginCheckXs接口登录

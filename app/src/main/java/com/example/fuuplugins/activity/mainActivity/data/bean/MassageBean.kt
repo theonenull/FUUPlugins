@@ -1,4 +1,4 @@
-package com.example.fuuplugins.activity.mainActivity.data.massage
+package com.example.fuuplugins.activity.mainActivity.data.bean
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

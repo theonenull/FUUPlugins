@@ -1,12 +1,10 @@
 package com.example.fuuplugins.activity.mainActivity.data.dao.yearOptions
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
-import com.example.fuuplugins.activity.mainActivity.config.RoomConfig
 import com.example.fuuplugins.activity.mainActivity.config.RoomConfig.YearOptionsDaoTableName
-import com.example.fuuplugins.activity.mainActivity.data.yearOptions.YearOptionsBean
+import com.example.fuuplugins.activity.mainActivity.data.bean.YearOptionsBean
 import kotlinx.coroutines.flow.Flow
 
 @Dao

@@ -1,4 +1,4 @@
-package com.example.fuuplugins.activity.mainActivity.data.course
+package com.example.fuuplugins.activity.mainActivity.data.bean
 
 
 import androidx.room.Entity

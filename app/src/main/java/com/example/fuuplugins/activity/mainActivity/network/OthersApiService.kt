@@ -26,4 +26,20 @@ interface OthersApiService {
 //    @POST("$STATISTICS_BASE_URL/api/login/validateCode")
 //    @Multipart
 //    suspend fun validateCode(@Part("validateCode") validateCode: RequestBody): ValidateCodeResponseDto
+
+    //考场
+    @POST("/student/xkjg/examination/exam_list.aspx")
+    @FormUrlEncoded
+    suspend fun getExams(
+        @Query("id") id: String,
+        @Field("ctl00\$ContentPlaceHolder1\$DDL_xnxq") xuenian: String,
+        @Field("__EVENTVALIDATION") event: String,
+        @Field("__VIEWSTATE") state: String,
+        @Field("ctl00\$ContentPlaceHolder1\$BT_submit") submit: String = "确定"
+    ): ResponseBody
+
+    @GET("/student/xkjg/examination/exam_list.aspx")
+    suspend fun getExamState(
+        @Query("id") id: String
+    ): ResponseBody
 }

@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import com.example.fuuplugins.activity.mainActivity.config.RoomConfig.CourseDaoTableName
-import com.example.fuuplugins.activity.mainActivity.data.course.CourseBean
+import com.example.fuuplugins.activity.mainActivity.data.bean.CourseBean
 import kotlinx.coroutines.flow.Flow
 
 
@@ -26,4 +26,6 @@ interface CourseDao {
     @Query("DELETE FROM $CourseDaoTableName")
     fun clearAll()
 
+    @Query("DELETE FROM $CourseDaoTableName WHERE kcYear = :year and kcXuenian = :xuenain")
+    fun clearByXq(year: String,xuenain:String)
 }

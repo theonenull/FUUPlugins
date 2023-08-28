@@ -29,13 +29,11 @@ import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
@@ -58,10 +56,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.edit
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.fuuplugins.FuuApplication
 import com.example.fuuplugins.R
-import com.example.fuuplugins.activity.mainActivity.data.massage.MassageBean
+import com.example.fuuplugins.activity.mainActivity.data.bean.ExamBean
+import com.example.fuuplugins.activity.mainActivity.data.bean.MassageBean
 import com.example.fuuplugins.config.dataStore.UserPreferencesKey
 import com.example.fuuplugins.config.dataStore.userDataStore
 import kotlinx.coroutines.Dispatchers
@@ -74,12 +72,15 @@ fun PersonPage(
     userDataState: State<UserDataInPersonPage> = remember {
         mutableStateOf(UserDataInPersonPage())
     },
-    massageDataFlowFromCourse : State<List<MassageBean>> = remember {
+    massageDataFlowFromCourse: State<List<MassageBean>> = remember {
         mutableStateOf(listOf())
     },
-    massageDataFlowFromMassageDao : State<List<MassageBean>> = remember {
+    massageDataFlowFromMassageDao: State<List<MassageBean>> = remember {
         mutableStateOf(listOf())
-    }
+    },
+    examDataFlowFromExamDao: State<List<ExamBean>> = remember {
+        mutableStateOf(listOf())
+    },
 ) {
     Column(
         modifier = Modifier
@@ -366,46 +367,63 @@ fun PoopRaft(
 
 @Composable
 @Preview
-fun ExamNotificationArea(){
-
-    Column(){
-        repeat(10){
-            Row (
-                modifier = Modifier
-                    .padding(top = 15.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ){
-                ExamLabel(
-                    when{
-                        it%5 == 1 -> remember {
-                            mutableStateOf(ExamLabelType.Elective)
-                        }
-                        it%4 == 1 -> remember {
-                            mutableStateOf(ExamLabelType.EXPERIMENT)
-                        }
-                        else -> remember {
-                            mutableStateOf(ExamLabelType.COMPULSORY)
-                        }
+fun ExamNotificationArea(
+    examDataFlowFromExamDao: State<List<ExamBean>> = remember {
+        mutableStateOf(listOf())
+    },
+){
+    Column{
+        examDataFlowFromExamDao.value
+            .filter {
+                it.address != ""
+            }.forEach{
+                Row (
+                    modifier = Modifier
+                        .background(Color(217, 217, 238))
+                        .clip(RoundedCornerShape(15.dp))
+                        .padding(top = 15.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ){
+    //                ExamLabel(
+    //                    when{
+    //                        it%5 == 1 -> remember {
+    //                            mutableStateOf(ExamLabelType.Elective)
+    //                        }
+    //                        it%4 == 1 -> remember {
+    //                            mutableStateOf(ExamLabelType.EXPERIMENT)
+    //                        }
+    //                        else -> remember {
+    //                            mutableStateOf(ExamLabelType.COMPULSORY)
+    //                        }
+    //                    }
+    //                )
+                    Column{
+                        Text(
+                            text = it.name,
+                            modifier = Modifier
+                                .padding(start = 10.dp)
+                                .weight(1.5f),
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = it.teacher,
+                            color = Color.Red,
+                            modifier = Modifier
+                                .weight(0.7f)
+                                .padding(horizontal = 10.dp),
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = it.address,
+                            color = Color.Red,
+                            modifier = Modifier
+                                .weight(0.7f)
+                                .padding(horizontal = 10.dp),
+                            textAlign = TextAlign.Center
+                        )
                     }
-                )
-                Text(
-                    text = "距离计算机网络考试还有",
-                    modifier = Modifier
-                        .padding(start = 10.dp)
-                        .weight(1.5f),
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "6",
-                    color = Color.Red,
-                    modifier = Modifier
-                        .weight(0.7f)
-                        .padding(horizontal = 10.dp),
-                    textAlign = TextAlign.Center
-                )
-                Text(text = "天")
-            }
+                }
         }
         Divider(
             modifier = Modifier

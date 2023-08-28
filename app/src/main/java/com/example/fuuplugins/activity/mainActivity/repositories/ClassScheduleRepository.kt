@@ -3,11 +3,10 @@ package com.example.fuuplugins.activity.mainActivity.repositories
 import android.util.Log
 
 import com.example.fuuplugins.activity.mainActivity.data.CookieUtil
-import com.example.fuuplugins.activity.mainActivity.data.course.CourseBean
+import com.example.fuuplugins.activity.mainActivity.data.bean.CourseBean
+import com.example.fuuplugins.activity.mainActivity.data.bean.ExamBean
 import com.example.fuuplugins.activity.mainActivity.network.JwchCourseService
-import com.example.fuuplugins.activity.mainActivity.network.JwchLoginService
 import com.example.fuuplugins.activity.mainActivity.network.OthersApiService
-import com.example.fuuplugins.activity.mainActivity.viewModel.ClassScheduleViewModel
 import com.example.fuuplugins.config.JWCH_BASE_URL
 import com.example.fuuplugins.network.OkHttpUtil
 import com.example.fuuplugins.util.catchWithMassage
@@ -29,7 +28,6 @@ import java.nio.charset.Charset
 import java.util.ArrayList
 import java.util.HashMap
 import java.util.concurrent.TimeUnit
-import java.util.regex.Pattern
 
 object ClassScheduleRepository {
     private var jwchCourseServiceInstance: JwchCourseService? = null
@@ -103,6 +101,7 @@ object ClassScheduleRepository {
 
             }
     }
+
     private suspend fun parseCoursesHTML(
         xueNian: String,
         result: String,
@@ -252,6 +251,8 @@ object ClassScheduleRepository {
         info("history共" + courseEles.size + "个" + " 解析后:" + tempCourses.size + "个")
         return tempCourses
     }
+
+
     private suspend fun parseCourseStateHTML(result: String): Map<String, String> {
         val document = Jsoup.parse(result)
         info("获取课表参数")
@@ -264,9 +265,7 @@ object ClassScheduleRepository {
         return params
     }
 
-//    private suspend fun getWeekHTML(): String {
-//        return String(getOthersApi().getWeek().bytes(), Charset.forName("GB2312"))
-//    }
+
     suspend fun getWeek():Flow<WeekData>{
         return flow {
             emit(String(getOthersApi().getWeekHtml().bytes(), Charset.forName("GB2312")) )
@@ -275,13 +274,7 @@ object ClassScheduleRepository {
         }
     }
 
-
     private suspend fun parseWeekHTML(result: String): WeekData {
-//        val document = Jsoup.parse(result)
-//        val curWeek = document.select("font[color=#FF0000]")[0].text()
-//        val yearStr = document.select("b")[0].text()
-//        val year = yearStr.substring(yearStr.indexOf("学年") - 4, yearStr.indexOf("学年"))
-//        val xuenian = yearStr.substring(yearStr.indexOf("学期") - 2, yearStr.indexOf("学期"))
         val nowWeek = result.split("var week = \"")[1].split("\";")[0].toInt()
         val curXuenian = result.split("var xq = \"")[1].split("\";")[0].toInt()
         val curYear = result.split("var xn = \"")[1].split("\";")[0].toInt()
@@ -291,6 +284,72 @@ object ClassScheduleRepository {
             curYear = curYear
         )
     }
+
+
+
+    private suspend fun getExamStateHTML(): Flow<String> {
+        return flow {
+            val data = getOthersApi().getExamState(CookieUtil.id).string()
+            emit(data)
+        }.flowIO()
+    }
+
+    suspend fun getExamsViewStateMap(xq: String,stateHTML:String): Flow<Map<String, String>> {
+        return flow {
+            if (stateHTML.contains("请先对任课教师进行测评")) {
+                throw Throwable("pingyi")
+            }
+            val viewStateMap = parseExamStateHTML(stateHTML)
+            emit(viewStateMap)
+        }.flowIO()
+
+    }
+
+    suspend fun getExamsHTML(viewStateMap: Map<String, String>, xq: String): Flow<List<ExamBean>> {
+        return flow<List<ExamBean>> {
+            val result = getOthersApi().getExams(
+                CookieUtil.id,
+                xq,
+                viewStateMap["EVENTVALIDATION"] ?: "",
+                viewStateMap["VIEWSTATE"] ?: ""
+            ).string()
+            emit(parseExamsHTML(result))
+        }.flowIO()
+    }
+
+    private fun parseExamsHTML(result: String): List<ExamBean> {
+        val exams = ArrayList<ExamBean>()
+        val document = Jsoup.parse(result)
+        val examElements = document.select("table[id=ContentPlaceHolder1_DataList_xxk]")
+            .select("tr[style=height:30px; border-bottom:1px solid gray; border-left:1px solid gray; vertical-align:middle;]")
+        info("getExamInfo: examList:" + examElements.size)
+        for (i in examElements.indices) {
+            val element = examElements[i]
+            val tds = element.select("td")
+            val name = tds[0].text()
+            val xuefen = tds[1].text()
+            val teacher = tds[2].text()
+            val address = tds[3].text()
+            val zuohao = tds[4].text()
+            if (address.isNotEmpty()) {
+                val exam = ExamBean(name, xuefen, teacher, address, zuohao)
+                exams.add(exam)
+            }
+        }
+        return exams
+    }
+
+    private fun parseExamStateHTML(result: String): Map<String, String> {
+        val document = Jsoup.parse(result)
+        //设置常用参数
+        val VIEWSTATE = document.getElementById("__VIEWSTATE").attr("value")
+        val EVENTVALIDATION = document.getElementById("__EVENTVALIDATION").attr("value")
+        val params = HashMap<String, String>()
+        params["VIEWSTATE"] = VIEWSTATE
+        params["EVENTVALIDATION"] = EVENTVALIDATION
+        return params
+    }
+
 
     private inline fun <reified T> createApi(url: String, client: OkHttpClient): T {
         val retrofit = Retrofit.Builder()

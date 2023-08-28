@@ -5,8 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import com.example.fuuplugins.activity.mainActivity.config.RoomConfig.MassageDaoTableName
-import com.example.fuuplugins.activity.mainActivity.data.course.CourseBean
-import com.example.fuuplugins.activity.mainActivity.data.massage.MassageBean
+import com.example.fuuplugins.activity.mainActivity.data.bean.MassageBean
 import kotlinx.coroutines.flow.Flow
 
 

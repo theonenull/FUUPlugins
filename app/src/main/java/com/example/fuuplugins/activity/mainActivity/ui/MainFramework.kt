@@ -66,6 +66,7 @@ fun MainFramework(
                     viewModel.personDataFlow.collectAsStateWithLifecycle(),
                     viewModel.massageDataFlowFromCourse.collectAsStateWithLifecycle(initialValue = emptyList()),
                     viewModel.massageDataFlowFromMassageDao.collectAsStateWithLifecycle(initialValue = emptyList()),
+                    viewModel.examDataFlowFromExamDao.collectAsStateWithLifecycle(initialValue = emptyList())
                 )
             },
             content = {

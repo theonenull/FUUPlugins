@@ -2,7 +2,6 @@ package com.example.fuuplugins.activity.mainActivity.viewModel
 
 
 import android.graphics.BitmapFactory
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.pager.PagerState
@@ -12,9 +11,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fuuplugins.FuuApplication
-import com.example.fuuplugins.activity.mainActivity.data.course.CourseBean
-import com.example.fuuplugins.activity.mainActivity.data.course.computeTheXueNian
-import com.example.fuuplugins.activity.mainActivity.data.yearOptions.YearOptionsBean
+import com.example.fuuplugins.activity.mainActivity.data.bean.CourseBean
+import com.example.fuuplugins.activity.mainActivity.data.bean.YearOptionsBean
 import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository
 import com.example.fuuplugins.activity.mainActivity.repositories.ClassScheduleRepository
 import com.example.fuuplugins.activity.mainActivity.repositories.LoginResult
@@ -29,11 +27,9 @@ import com.example.fuuplugins.config.dataStore.userDataStore
 import com.example.fuuplugins.util.catchWithMassage
 import com.example.fuuplugins.util.easyToast
 import com.example.fuuplugins.util.flowIO
-import com.example.fuuplugins.util.warn
 import com.example.material.ButtonState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
@@ -87,7 +83,6 @@ class ClassScheduleViewModel:ViewModel() {
             listOf()
         )
 
-
     init {
         viewModelScope.launch(Dispatchers.IO) {
             ClassScheduleRepository.getWeek()
@@ -100,6 +95,7 @@ class ClassScheduleViewModel:ViewModel() {
                 }
             if(checkCookieEffectiveness()){
                 getCourseFromNetwork()
+
             }
         }
     }
@@ -124,6 +120,7 @@ class ClassScheduleViewModel:ViewModel() {
                                 "${weekData.curYear}0${weekData.curXuenian}",
                                 onGetOptions = { yearOptionsFromNetwork ->
 //                                    yearOptions.value = yearOptionsFromNetwork
+                                    FuuApplication.db.yearOptionsDao().clearAll()
                                     FuuApplication.db.yearOptionsDao().insertYearOptions(
                                         yearOptionsFromNetwork.map {
                                             YearOptionsBean(yearOptionsName = it)
@@ -136,6 +133,7 @@ class ClassScheduleViewModel:ViewModel() {
 
                         }
                         .collectLatest { initCourseBean ->
+                            FuuApplication.db.courseDao().clearAll()
                             FuuApplication.db.courseDao().insertCourses(initCourseBean)
                             courseData.weekData.let{
                                 setYearWeek(
@@ -178,6 +176,7 @@ class ClassScheduleViewModel:ViewModel() {
                                 )
                             }
                             .collectLatest { initCourseBean ->
+                                FuuApplication.db.courseDao().clearByXq(xq.substring(0,4),xq.substring(5,6))
                                 FuuApplication.instance.userDataStore.edit {
                                     it[UserPreferencesKey.USER_DATA_VALIDITY_PERIOD] = Clock.System.now().toString()
                                 }
@@ -189,6 +188,7 @@ class ClassScheduleViewModel:ViewModel() {
             }
         }
     }
+
 
     fun refreshCourse(){
         viewModelScope.launch(Dispatchers.IO) {
@@ -210,6 +210,7 @@ class ClassScheduleViewModel:ViewModel() {
 
     fun refreshWithVerificationCode(verification:String){
         viewModelScope.launch(Dispatchers.IO) {
+            refreshButtonState.value = ButtonState.Loading
             val passwordState = FuuApplication.instance.userDataStore.data.map {
                 it[UserPreferencesKey.USER_PASSWORD] ?: ""
             }.first()
@@ -223,6 +224,7 @@ class ClassScheduleViewModel:ViewModel() {
                 everyErrorAction = {
                     easyToast(it.throwable.message.toString())
                     refreshCourse()
+                    refreshButtonState.value = ButtonState.Normal
                 }
             )
                 .flatMapConcat {
@@ -231,18 +233,22 @@ class ClassScheduleViewModel:ViewModel() {
                         result = it,
                         failedToGetAccount = {
                             easyToast(it.message.toString())
+                            refreshButtonState.value = ButtonState.Normal
                         },
                         elseMistake = { error ->
                             easyToast(error.message.toString())
+                            refreshButtonState.value = ButtonState.Normal
                         }
                     ).retryWhen{ error, tryTime ->
                         error.message == "获取account失败" && tryTime <= 3
                     }
                         .catchWithMassage {
                             if(it.message == "获取account失败"){
+                                refreshButtonState.value = ButtonState.Normal
                                 easyToast(it.message.toString())
                             }
                             else{
+                                refreshButtonState.value = ButtonState.Normal
                                 easyToast(it.message.toString())
                             }
                         }.flowIO()
@@ -252,8 +258,6 @@ class ClassScheduleViewModel:ViewModel() {
                         queryMap = it,
                         user = usernameState
                     )
-                    .catchWithMassage {
-                    }
                 }
                 .flatMapConcat {
                     BlockLoginPageRepository.checkTheUserInformation(
@@ -262,22 +266,24 @@ class ClassScheduleViewModel:ViewModel() {
 
                         }
                     ).catchWithMassage {
-
+                        refreshButtonState.value = ButtonState.Normal
                     }
                 }
                 .collect{ loginResult ->
                     when(loginResult){
                         LoginResult.LoginError->{
-                            easyToast("刷新失败,请重新登录")
+                            refreshButtonState.value = ButtonState.Normal
+                            easyToast("刷新失败")
                         }
                         LoginResult.LoginSuccess->{
                             easyToast("刷新成功")
+                            refreshButtonState.value = ButtonState.Normal
                             FuuApplication.instance.userDataStore.edit {
                                 it[UserPreferencesKey.USER_DATA_VALIDITY_PERIOD] = Clock.System.now().toString()
                             }
+                            getCourseFromNetwork()
                         }
                     }
-                    getCourseFromNetwork()
                 }
             }
         }
