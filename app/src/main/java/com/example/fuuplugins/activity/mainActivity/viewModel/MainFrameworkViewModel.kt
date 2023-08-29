@@ -46,6 +46,5 @@ class MainFrameworkViewModel: ViewModel() {
         }
     }
     val massageDataFlowFromMassageDao = FuuApplication.db.massageDao().getAll()
-
     val examDataFlowFromExamDao = FuuApplication.db.examDao().getAll()
 }

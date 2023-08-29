@@ -25,7 +25,7 @@ fun <T> Flow<T>.flowUnconfined() : Flow<T>{
 
 fun <T>Flow<T>.catchWithMassage(block:FlowCollector<T>.(Throwable)->Unit) : Flow<T>{
     return this.catch {
-        Log.e("sss",it.toString())
+        Log.e("flow throwable",it.toString())
         block.invoke(this,it)
     }
 }

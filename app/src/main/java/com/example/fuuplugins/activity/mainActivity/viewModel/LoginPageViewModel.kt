@@ -1,6 +1,7 @@
 package com.example.fuuplugins.activity.mainActivity.viewModel
 
 import android.graphics.BitmapFactory
+import android.util.Log
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.datastore.preferences.core.edit
@@ -12,9 +13,15 @@ import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageR
 import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository.loadCookieData
 import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository.loginByTokenForIdInUrl
 import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository.loginStudent
+import com.example.fuuplugins.activity.mainActivity.repositories.ExamRepository
+import com.example.fuuplugins.activity.mainActivity.repositories.ExamRepository.getExamStateHTML
+import com.example.fuuplugins.activity.mainActivity.repositories.ExamRepository.parseExamsHTML
 import com.example.fuuplugins.activity.mainActivity.repositories.LoginResult
 import com.example.fuuplugins.activity.mainActivity.ui.WhetherVerificationCode
+import com.example.fuuplugins.config.dataStore.DataManagePreferencesKey
 import com.example.fuuplugins.config.dataStore.UserPreferencesKey
+import com.example.fuuplugins.config.dataStore.getDataManageDataStore
+import com.example.fuuplugins.config.dataStore.getUserDataStore
 import com.example.fuuplugins.config.dataStore.setUserDataStore
 import com.example.fuuplugins.config.dataStore.userDataStore
 import com.example.fuuplugins.util.catchWithMassage
@@ -160,5 +167,7 @@ class LoginPageViewModel: ViewModel() {
                 }
         }
     }
+
+
 
 }

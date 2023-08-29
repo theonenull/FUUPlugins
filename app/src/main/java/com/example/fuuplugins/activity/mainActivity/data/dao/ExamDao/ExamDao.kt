@@ -15,7 +15,10 @@ interface ExamDao {
     fun getAll(): Flow<List<ExamBean>>
 
     @Insert
-    fun insertAll(vararg users: ExamBean)
+    fun insertAll(vararg exam: ExamBean)
+
+    @Insert
+    fun insertList(exam: List<ExamBean>)
 
     @Query("DELETE FROM ${RoomConfig.ExamDaoTableName}")
     fun clearAll()

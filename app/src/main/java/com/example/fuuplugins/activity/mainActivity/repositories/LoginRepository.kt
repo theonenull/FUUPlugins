@@ -2,6 +2,7 @@ package com.example.fuuplugins.activity.mainActivity.repositories
 
 import android.util.Log
 import androidx.datastore.preferences.core.edit
+import com.example.fuuplugins.Base.BaseRepository
 import com.example.fuuplugins.FuuApplication
 import com.example.fuuplugins.activity.mainActivity.data.CookieUtil
 import com.example.fuuplugins.activity.mainActivity.network.JwchLoginService
@@ -14,7 +15,6 @@ import com.example.fuuplugins.util.catchWithMassage
 import com.example.fuuplugins.util.flowIO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.HttpUrl
@@ -29,7 +29,8 @@ interface LoginPageRepository{
 
 }
 
-object BlockLoginPageRepository : LoginPageRepository{
+object BlockLoginPageRepository :  BaseRepository() {
+
     private var jwchLoginServiceInstance: JwchLoginService? = null
     private val client: OkHttpClient by lazy {
         OkHttpUtil.getDefaultClient().newBuilder()
@@ -61,7 +62,6 @@ object BlockLoginPageRepository : LoginPageRepository{
         }
         return jwchLoginServiceInstance!!
     }
-
     suspend fun getVerifyCode(): Flow<ByteArray> {
         return flow {
             val inputString = getJwchApi().getVerifyCode().bytes()
@@ -70,7 +70,6 @@ object BlockLoginPageRepository : LoginPageRepository{
             )
         }.flowIO()
     }
-
     //登录 step1
     fun loginStudent(
         user: String,
@@ -198,14 +197,9 @@ object BlockLoginPageRepository : LoginPageRepository{
             }
         }.flowIO()
     }
-    private inline fun <reified T> createApi(url: String, client: OkHttpClient): T {
-        val retrofit = Retrofit.Builder()
-            .baseUrl(url)
-            .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        return retrofit.create(T::class.java)
-    }
+
+
+
 }
 
 data class TokenData(

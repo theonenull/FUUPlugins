@@ -2,6 +2,7 @@ package com.example.fuuplugins.activity.mainActivity.viewModel
 
 
 import android.graphics.BitmapFactory
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.pager.PagerState
@@ -14,7 +15,8 @@ import com.example.fuuplugins.FuuApplication
 import com.example.fuuplugins.activity.mainActivity.data.bean.CourseBean
 import com.example.fuuplugins.activity.mainActivity.data.bean.YearOptionsBean
 import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository
-import com.example.fuuplugins.activity.mainActivity.repositories.ClassScheduleRepository
+import com.example.fuuplugins.activity.mainActivity.repositories.CourseRepository
+import com.example.fuuplugins.activity.mainActivity.repositories.ExamRepository
 import com.example.fuuplugins.activity.mainActivity.repositories.LoginResult
 import com.example.fuuplugins.activity.mainActivity.repositories.WeekData
 import com.example.fuuplugins.activity.mainActivity.ui.WhetherVerificationCode
@@ -85,7 +87,7 @@ class ClassScheduleViewModel:ViewModel() {
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            ClassScheduleRepository.getWeek()
+            CourseRepository.getWeek()
                 .collectLatest {
                     setYearWeek(
                         year = it.curYear.toString(), week = it.nowWeek.toString(), xuenian = it.curXuenian.toString()
@@ -95,7 +97,7 @@ class ClassScheduleViewModel:ViewModel() {
                 }
             if(checkCookieEffectiveness()){
                 getCourseFromNetwork()
-
+                getExamData()
             }
         }
     }
@@ -103,7 +105,8 @@ class ClassScheduleViewModel:ViewModel() {
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getCourseFromNetwork(){
         viewModelScope.launch(Dispatchers.IO) {
-            with(ClassScheduleRepository){
+            with(CourseRepository){
+                getExamData()
                 getCourseStateHTML()
                 .zip(
                     getWeek()
@@ -151,7 +154,7 @@ class ClassScheduleViewModel:ViewModel() {
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getOtherCourseFromNetwork(){
         viewModelScope.launch(Dispatchers.IO) {
-            with(ClassScheduleRepository){
+            with(CourseRepository){
                 yearOptions.first().let { list ->
                     list.filter {
                         it.yearOptionsName != getDataManageDataStore(DataManagePreferencesKey.DATA_MANAGE_CURRENT_ACADEMIC_YEAR,"").first()
@@ -189,7 +192,41 @@ class ClassScheduleViewModel:ViewModel() {
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getExamData(){
+        viewModelScope.launch(Dispatchers.IO) {
+            val xq = getDataManageDataStore(DataManagePreferencesKey.DATA_MANAGE_CURRENT_ACADEMIC_YEAR,"").first()
+            ExamRepository.apply {
+                getExamStateHTML()
+                    .catchWithMassage {
 
+                    }
+                    .map {
+                        Log.d("html",it)
+                        return@map(parseExamsHTML(it))
+                    }
+//                    .flatMapConcat {
+//                        println("1:$it")
+//                        getExamsViewStateMap(stateHTML = it)
+//                    }
+//                    .catchWithMassage {
+//                        println("2")
+//                    }
+//                    .flatMapConcat {
+//                        println("2:$it")
+//                        getExams(viewStateMap = it, xq = xq)
+//                    }
+//                    .catchWithMassage {
+//                        println(xq)
+//                    }
+                    .collectLatest {
+                        Log.d("exam",it.toString())
+                        FuuApplication.db.examDao().clearAll()
+                        FuuApplication.db.examDao().insertList(it)
+                    }
+            }
+        }
+    }
     fun refreshCourse(){
         viewModelScope.launch(Dispatchers.IO) {
             if(checkCookieEffectiveness()){

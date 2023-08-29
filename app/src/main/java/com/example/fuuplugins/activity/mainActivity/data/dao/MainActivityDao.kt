@@ -11,7 +11,7 @@ import com.example.fuuplugins.activity.mainActivity.data.bean.MassageBean
 import com.example.fuuplugins.activity.mainActivity.data.bean.YearOptionsBean
 import com.example.fuuplugins.activity.mainActivity.data.dao.yearOptions.YearOptionsDao
 
-@Database(entities = [CourseBean::class, MassageBean::class, YearOptionsBean::class, ExamBean::class],exportSchema=false, version = 1)
+@Database(entities = [CourseBean::class, MassageBean::class, YearOptionsBean::class, ExamBean::class],exportSchema=false, version = 2)
 abstract class FuuDatabase : RoomDatabase() {
     abstract fun courseDao(): CourseDao
     abstract fun massageDao(): MassageDao

@@ -104,7 +104,9 @@ fun PersonPage(
         MemorandumArea(
             massageData
         )
-        ExamNotificationArea()
+        ExamNotificationArea(
+            examDataFlowFromExamDao
+        )
         RibbonArea()
     }
 }
@@ -372,58 +374,63 @@ fun ExamNotificationArea(
         mutableStateOf(listOf())
     },
 ){
-    Column{
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+    ){
         examDataFlowFromExamDao.value
             .filter {
-                it.address != ""
+                it.address == ""
             }.forEach{
-                Row (
-                    modifier = Modifier
-                        .background(Color(217, 217, 238))
-                        .clip(RoundedCornerShape(15.dp))
-                        .padding(top = 15.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ){
-    //                ExamLabel(
-    //                    when{
-    //                        it%5 == 1 -> remember {
-    //                            mutableStateOf(ExamLabelType.Elective)
-    //                        }
-    //                        it%4 == 1 -> remember {
-    //                            mutableStateOf(ExamLabelType.EXPERIMENT)
-    //                        }
-    //                        else -> remember {
-    //                            mutableStateOf(ExamLabelType.COMPULSORY)
-    //                        }
-    //                    }
-    //                )
-                    Column{
-                        Text(
-                            text = it.name,
-                            modifier = Modifier
-                                .padding(start = 10.dp)
-                                .weight(1.5f),
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = it.teacher,
-                            color = Color.Red,
-                            modifier = Modifier
-                                .weight(0.7f)
-                                .padding(horizontal = 10.dp),
-                            textAlign = TextAlign.Center
-                        )
-                        Text(
-                            text = it.address,
-                            color = Color.Red,
-                            modifier = Modifier
-                                .weight(0.7f)
-                                .padding(horizontal = 10.dp),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
+                ExamItem(it)
+//                Row (
+//                    modifier = Modifier
+//                        .wrapContentHeight()
+//                        .fillMaxWidth()
+//                        .background(Color(217, 217, 238))
+//                        .clip(RoundedCornerShape(15.dp))
+//                        .padding(top = 15.dp),
+//                    verticalAlignment = Alignment.CenterVertically,
+//                    horizontalArrangement = Arrangement.Center
+//                ){
+//    //                ExamLabel(
+//    //                    when{
+//    //                        it%5 == 1 -> remember {
+//    //                            mutableStateOf(ExamLabelType.Elective)
+//    //                        }
+//    //                        it%4 == 1 -> remember {
+//    //                            mutableStateOf(ExamLabelType.EXPERIMENT)
+//    //                        }
+//    //                        else -> remember {
+//    //                            mutableStateOf(ExamLabelType.COMPULSORY)
+//    //                        }
+//    //                    }
+//    //                )
+//                    Column{
+//                        Text(
+//                            text = it.name,
+//                            modifier = Modifier
+//                                .padding(start = 10.dp),
+//                            overflow = TextOverflow.Ellipsis
+//                        )
+//                        Text(
+//                            text = it.teacher,
+//                            color = Color.Red,
+//                            modifier = Modifier
+//
+//                                .padding(horizontal = 10.dp),
+//                            textAlign = TextAlign.Center
+//                        )
+//                        Text(
+//                            text = it.address,
+//                            color = Color.Red,
+//                            modifier = Modifier
+//                                .padding(horizontal = 10.dp),
+//                            textAlign = TextAlign.Center
+//                        )
+//                    }
+//                }
         }
         Divider(
             modifier = Modifier
@@ -564,3 +571,37 @@ data class UserDataInPersonPage(
     val name : String = "" ,
     val academy : String = ""
 )
+
+@Composable
+@Preview
+fun ExamItem(
+    examItem : ExamBean = ExamBean(
+
+    )
+){
+    Column(
+        modifier = Modifier
+            .padding(top = 10.dp)
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color(215, 215, 237))
+            .padding(10.dp)
+    ) {
+        Text(
+            text = examItem.name
+        )
+        Text(
+            text = examItem.teacher,
+            fontSize = 10.sp
+        )
+        Text(
+            text = examItem.address,
+            fontSize = 10.sp
+        )
+        Text(
+            text = "学分:${examItem.xuefen}",
+            fontSize = 10.sp
+        )
+    }
+}

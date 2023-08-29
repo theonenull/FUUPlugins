@@ -2,7 +2,7 @@ package com.example.fuuplugins
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.fuuplugins.activity.mainActivity.repositories.ClassScheduleRepository
+import com.example.fuuplugins.activity.mainActivity.repositories.CourseRepository
 import com.example.fuuplugins.util.debug
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,12 +31,12 @@ class ExampleInstrumentedTest {
         val job = Job()
         val scope = CoroutineScope(job)
         scope.launch(Dispatchers.IO) {
-            ClassScheduleRepository.getCourseStateHTML()
+            CourseRepository.getCourseStateHTML()
                 .flatMapConcat {
-                    ClassScheduleRepository.getCourses("202202023",it)
+                    CourseRepository.getCourses("202202023",it)
                 }
                 .flatMapConcat {
-                    ClassScheduleRepository.getCoursesHTML(it,"202202023")
+                    CourseRepository.getCoursesHTML(it,"202202023")
                 }
                 .collectLatest {
                     debug(it.toString())
