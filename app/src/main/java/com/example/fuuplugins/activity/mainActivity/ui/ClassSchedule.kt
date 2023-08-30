@@ -5,6 +5,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -307,7 +308,7 @@ fun ClassCard(
             .clickable {
                 detailAboutCourse.invoke(courseBean)
             }
-            .padding(vertical = 10.dp, horizontal = 5.dp),
+            .padding(vertical = 3.dp, horizontal = 3.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ){
@@ -317,8 +318,10 @@ fun ClassCard(
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
             modifier = Modifier
-                .padding(top = 5.dp),
-            fontSize = 12.sp,
+                .wrapContentHeight()
+                .fillMaxWidth(),
+            fontSize = 10.sp,
+            lineHeight = 11.sp
         )
         Text(
             text = courseBean.kcLocation,
@@ -326,8 +329,10 @@ fun ClassCard(
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
             modifier = Modifier
-                .padding(top = 5.dp),
-            fontSize = 10.sp
+                .padding(top = 3.dp)
+                .wrapContentHeight(),
+            fontSize = 10.sp,
+            lineHeight = 11.sp
         )
 //        Text(
 //            text = "203",
