@@ -18,6 +18,8 @@ import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageR
 import com.example.fuuplugins.activity.mainActivity.repositories.CourseRepository
 import com.example.fuuplugins.activity.mainActivity.repositories.ExamRepository
 import com.example.fuuplugins.activity.mainActivity.repositories.LoginResult
+import com.example.fuuplugins.activity.mainActivity.repositories.OtherRepository
+import com.example.fuuplugins.activity.mainActivity.repositories.OtherRepository.parseBeginDate
 import com.example.fuuplugins.activity.mainActivity.repositories.WeekData
 import com.example.fuuplugins.activity.mainActivity.ui.WhetherVerificationCode
 import com.example.fuuplugins.config.dataStore.DataManagePreferencesKey
@@ -39,7 +41,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.zip
@@ -54,7 +58,6 @@ import kotlinx.datetime.toLocalDateTime
 
 @OptIn(ExperimentalFoundationApi::class)
 class ClassScheduleViewModel:ViewModel() {
-
     private var course = FuuApplication.db.courseDao().getAll()
     var currentYear = MutableStateFlow<String?>(null)
     var currentWeek = MutableStateFlow<Int>(1)
@@ -65,13 +68,11 @@ class ClassScheduleViewModel:ViewModel() {
     val academicYearSelectsDialogState = MutableStateFlow(false)
     val courseDialog = MutableStateFlow<CourseBean?>(null)
 
-
     val refreshDialog = MutableStateFlow(false)
     var refreshDialogVerificationCode =  MutableStateFlow<ImageBitmap?>(null)
     val refreshVerificationCodeState  =  MutableStateFlow(WhetherVerificationCode.LOADING)
     val refreshClickAble = MutableStateFlow(true)
     val refreshButtonState = MutableStateFlow(ButtonState.Normal)
-
 
     val courseForShow = currentYear
         .combine(course){
@@ -94,6 +95,16 @@ class ClassScheduleViewModel:ViewModel() {
                     )
                     currentYear.value = it.getXueQi()
                     currentWeek.value = it.nowWeek.toString().toInt()
+                    OtherRepository.getSchoolCalendar(it.getXueQi())
+                        .retry(10)
+                        .map { result->
+                            parseBeginDate(it.getXueQi(),result)
+                        }.catchWithMassage{
+
+                        }
+                        .collectLatest {
+
+                        }
                 }
             if(checkCookieEffectiveness()){
                 getCourseFromNetwork()
@@ -205,20 +216,6 @@ class ClassScheduleViewModel:ViewModel() {
                         Log.d("html",it)
                         return@map(parseExamsHTML(it))
                     }
-//                    .flatMapConcat {
-//                        println("1:$it")
-//                        getExamsViewStateMap(stateHTML = it)
-//                    }
-//                    .catchWithMassage {
-//                        println("2")
-//                    }
-//                    .flatMapConcat {
-//                        println("2:$it")
-//                        getExams(viewStateMap = it, xq = xq)
-//                    }
-//                    .catchWithMassage {
-//                        println(xq)
-//                    }
                     .collectLatest {
                         Log.d("exam",it.toString())
                         FuuApplication.db.examDao().clearAll()
@@ -227,9 +224,10 @@ class ClassScheduleViewModel:ViewModel() {
             }
         }
     }
+
     fun refreshCourse(){
         viewModelScope.launch(Dispatchers.IO) {
-            if(checkCookieEffectiveness()){
+            if(checkCookieEffectiveness()&&false){
                 getCourseFromNetwork()
             }
             else{
@@ -265,7 +263,6 @@ class ClassScheduleViewModel:ViewModel() {
                 }
             )
                 .flatMapConcat {
-//                    Log.d("ssss",it.body()?.string().toString() ?: "")
                     BlockLoginPageRepository.loginByTokenForIdInUrl(
                         result = it,
                         failedToGetAccount = {
@@ -323,11 +320,23 @@ class ClassScheduleViewModel:ViewModel() {
                     }
                 }
             }
+        viewModelScope.launch(Dispatchers.IO) {
+            getExamData()
         }
+    }
 
     fun changeCurrentYear(newValue:String){
         viewModelScope.launch {
             currentYear.emit(newValue)
+            OtherRepository.getSchoolCalendar(newValue)
+                .retry(10)
+                .map { result->
+                    parseBeginDate(newValue,result)
+                }
+                .catchWithMassage {  }
+                .collectLatest {
+
+                }
         }
     }
     override fun onCleared() {
@@ -349,6 +358,9 @@ class ClassScheduleViewModel:ViewModel() {
         }
         val timeZone = TimeZone.currentSystemDefault()
         val timeForCheck  = Instant.parse(currentTime).plus(10, DateTimeUnit.MINUTE, timeZone).toLocalDateTime(TimeZone.currentSystemDefault())
-        return timeForCheck < Clock.System.now().toLocalDateTime( TimeZone.currentSystemDefault())
+//        return timeForCheck < Clock.System.now().toLocalDateTime( TimeZone.currentSystemDefault())
+        return false
     }
+
+
 }

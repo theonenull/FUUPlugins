@@ -13,6 +13,7 @@ import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageR
 import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository.loadCookieData
 import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository.loginByTokenForIdInUrl
 import com.example.fuuplugins.activity.mainActivity.repositories.BlockLoginPageRepository.loginStudent
+import com.example.fuuplugins.activity.mainActivity.repositories.CourseRepository.getOthersApi
 import com.example.fuuplugins.activity.mainActivity.repositories.ExamRepository
 import com.example.fuuplugins.activity.mainActivity.repositories.ExamRepository.getExamStateHTML
 import com.example.fuuplugins.activity.mainActivity.repositories.ExamRepository.parseExamsHTML
@@ -36,6 +37,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
@@ -43,8 +45,8 @@ import kotlinx.coroutines.withContext
 
 
 class LoginPageViewModel: ViewModel() {
-    val usernameState = MutableStateFlow("102101624")
-    val passwordState = MutableStateFlow("351172abc2015@")
+    val usernameState = MutableStateFlow("")
+    val passwordState = MutableStateFlow("")
     val loginButtonState  = MutableStateFlow(true)
     val verificationCodeTextState = MutableStateFlow("")
     val verificationCode = MutableStateFlow<ImageBitmap?>(null)

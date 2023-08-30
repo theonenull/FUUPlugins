@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -237,7 +238,7 @@ fun CaptchaLine(
             modifier = Modifier
                 .padding(end = 10.dp)
                 .weight(1f)
-                .wrapContentHeight()
+                .height(56.dp)
         ){
             when(it){
                 WhetherVerificationCode.SUCCESS->{
@@ -249,7 +250,8 @@ fun CaptchaLine(
                             .clickable {
                                 retryGetVerificationCode.invoke()
                             },
-                        contentDescription = null
+                        contentDescription = null,
+                        contentScale = ContentScale.FillBounds
                     )
                 }
                 WhetherVerificationCode.FAIL->{

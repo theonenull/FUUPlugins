@@ -2,6 +2,7 @@ package com.example.fuuplugins.config.dataStore
 
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.fuuplugins.FuuApplication
 import kotlinx.coroutines.flow.Flow
@@ -16,6 +17,12 @@ object DataManagePreferencesKey {
     val DATA_MANAGE_CURRENT_WEEK = stringPreferencesKey("data_manage_current_week")
 
     val DATA_MANAGE_CURRENT_ACADEMIC_YEAR = stringPreferencesKey("data_manage_current_academic_year")
+
+    val DATA_MANAGE_START_DAY = intPreferencesKey("data_manage_start_day")
+
+    val DATA_MANAGE_START_MONTH = intPreferencesKey("data_manage_start_month")
+
+    val DATA_MANAGE_START_YEAR = intPreferencesKey("data_manage_start_year")
 }
 
 fun <T1> getDataManageDataStore(

@@ -74,11 +74,16 @@ import androidx.compose.material3.TopAppBarDefaults
 
 import androidx.compose.runtime.State
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.datastore.dataStore
 import com.example.fuuplugins.activity.mainActivity.data.bean.YearOptionsBean
+import com.example.fuuplugins.config.dataStore.DataManagePreferencesKey
+import com.example.fuuplugins.config.dataStore.getDataManageDataStore
 import com.example.material.ButtonState
 import com.example.material.LoadableButton
 import com.example.material.ScrollSelection
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import java.util.Calendar
 
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
@@ -167,7 +172,7 @@ fun ClassSchedule(
                 }
             }
         )
-        TimeOfWeekColumn()
+        TimeOfWeekColumn(viewModel.pageState.collectAsStateWithLifecycle().value.currentPage)
         Row (
             modifier = Modifier
                 .weight(1f)
@@ -189,7 +194,7 @@ fun ClassSchedule(
                 pageCount = 30
             ){ page->
                 Column {
-                    TimeOfMonthColumn()
+                    TimeOfMonthColumn(page+1)
                     Row(
                         Modifier
                             .fillMaxSize()
@@ -538,34 +543,19 @@ fun ClassDialog(
     }
 }
 
-//@Composable
-//fun CourseGrid(
-//    lazyGridState : LazyGridState = rememberLazyGridState()
-//){
-//    rememberLazyListState()
-//    val index by remember {
-//        derivedStateOf { lazyGridState.firstVisibleItemIndex }
-//    }
-//    LazyVerticalGrid(
-//        columns = GridCells.Fixed(7),
-//        contentPadding = PaddingValues(horizontal = 2.dp, vertical = 2.dp),
-//        state = lazyGridState
-//    ){
-//        items(77) {
-//            ClassCard(courseBeans[it-1])
-//        }
-//    }
-//}
-//
-//@Composable
-//@Preview
-//fun CourseGridPreview(){
-//    CourseGrid()
-//}
+
 
 @Composable
-
-fun TimeOfWeekColumn(){
+fun TimeOfWeekColumn(week:Int){
+    val startMonth = getDataManageDataStore(DataManagePreferencesKey.DATA_MANAGE_START_MONTH,1).collectAsStateWithLifecycle(
+        initialValue = 0
+    ).value
+    val startYear = getDataManageDataStore(DataManagePreferencesKey.DATA_MANAGE_START_YEAR,1).collectAsStateWithLifecycle(
+        initialValue = 0
+    ).value
+    val startDay = getDataManageDataStore(DataManagePreferencesKey.DATA_MANAGE_START_DAY,1).collectAsStateWithLifecycle(
+        initialValue = 0
+    ).value
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -577,8 +567,8 @@ fun TimeOfWeekColumn(){
             modifier = Modifier
                 .width(20.dp)
                 .wrapContentHeight(),
-            text = "8月",
-            fontSize = 10.sp,
+            text = "${getMonthByWeek(week,startYear,startMonth,startDay)}",
+            fontSize = 12.sp,
             textAlign = TextAlign.Center,
         )
         WeekDay.values().forEach { item ->
@@ -595,8 +585,16 @@ fun TimeOfWeekColumn(){
 }
 
 @Composable
-
-fun TimeOfMonthColumn(){
+fun TimeOfMonthColumn(week:Int){
+    val startMonth = getDataManageDataStore(DataManagePreferencesKey.DATA_MANAGE_START_MONTH,1).collectAsStateWithLifecycle(
+        initialValue = 0
+    ).value
+    val startYear = getDataManageDataStore(DataManagePreferencesKey.DATA_MANAGE_START_YEAR,1).collectAsStateWithLifecycle(
+        initialValue = 0
+    ).value
+    val startDay = getDataManageDataStore(DataManagePreferencesKey.DATA_MANAGE_START_DAY,1).collectAsStateWithLifecycle(
+        initialValue = 0
+    ).value
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -604,9 +602,9 @@ fun TimeOfMonthColumn(){
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        WeekDay.values().forEach { _ ->
+        WeekDay.values().forEachIndexed{ index,_ ->
             Text(
-                text = Random.nextInt(1,30).toString(),
+                text = getDataByWeek(week,index, startYear,startMonth,startDay).toString(),
                 modifier = Modifier
                     .weight(1f)
                     .wrapContentHeight(),
@@ -616,10 +614,34 @@ fun TimeOfMonthColumn(){
     }
 }
 
+
+fun getDataByWeek(week: Int,day:Int,startYear:Int, startMonth:Int,startDay:Int,):Int{
+    //创建一个自定义年月日的日期，使用Calendar.set
+    val calendar = Calendar.getInstance()
+    calendar.set(startYear,startMonth-1,startDay)
+    calendar.add(Calendar.WEEK_OF_YEAR,week-1)
+    calendar.add(Calendar.DAY_OF_MONTH,day)
+    val year = calendar.get(Calendar.YEAR)
+    val month = calendar.get(Calendar.MONTH)+1
+    val day = calendar.get(Calendar.DAY_OF_MONTH)
+    return day
+}
+
+fun getMonthByWeek(week: Int,startYear:Int, startMonth:Int,startDay:Int,):Int{
+    //创建一个自定义年月日的日期，使用Calendar.set
+    val calendar = Calendar.getInstance()
+    calendar.set(startYear,startMonth-1,startDay)
+    calendar.add(Calendar.WEEK_OF_YEAR,week)
+    val year = calendar.get(Calendar.YEAR)
+    val month = calendar.get(Calendar.MONTH)
+    val day = calendar.get(Calendar.DAY_OF_MONTH)
+    return month+1
+}
+
 @Composable
 @Preview
 fun TimeOfWeekColumnPreview(){
-    TimeOfWeekColumn()
+    TimeOfWeekColumn(1)
 }
 
 val ClassScheduleNotificationDisplayProperties = listOf("教室","教师","节数","周数","备注",)
@@ -737,9 +759,9 @@ fun ToRefreshDialog(
             modifier = Modifier
                 .fillMaxHeight(0.7f)
                 .clip(RoundedCornerShape(10.dp))
+                .background(Color(216, 216, 237))
                 .verticalScroll(rememberScrollState())
-                .padding(10.dp)
-                .background(Color.White),
+                .padding(10.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -756,7 +778,7 @@ fun ToRefreshDialog(
                 onClick = refresh,
                 buttonState = buttonState.value,
                 normalContent = {
-                    Text(text = "Normal")
+                    Text(text = "REFRESH")
                 },
                 enabled = buttonState.value == ButtonState.Normal && verificationCodeText.value!="",
                 loadingContent = {
