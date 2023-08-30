@@ -381,57 +381,16 @@ fun ExamNotificationArea(
     ){
         examDataFlowFromExamDao.value
             .filter {
-                it.address == ""
-            }.forEach{
-                ExamItem(it)
-//                Row (
-//                    modifier = Modifier
-//                        .wrapContentHeight()
-//                        .fillMaxWidth()
-//                        .background(Color(217, 217, 238))
-//                        .clip(RoundedCornerShape(15.dp))
-//                        .padding(top = 15.dp),
-//                    verticalAlignment = Alignment.CenterVertically,
-//                    horizontalArrangement = Arrangement.Center
-//                ){
-//    //                ExamLabel(
-//    //                    when{
-//    //                        it%5 == 1 -> remember {
-//    //                            mutableStateOf(ExamLabelType.Elective)
-//    //                        }
-//    //                        it%4 == 1 -> remember {
-//    //                            mutableStateOf(ExamLabelType.EXPERIMENT)
-//    //                        }
-//    //                        else -> remember {
-//    //                            mutableStateOf(ExamLabelType.COMPULSORY)
-//    //                        }
-//    //                    }
-//    //                )
-//                    Column{
-//                        Text(
-//                            text = it.name,
-//                            modifier = Modifier
-//                                .padding(start = 10.dp),
-//                            overflow = TextOverflow.Ellipsis
-//                        )
-//                        Text(
-//                            text = it.teacher,
-//                            color = Color.Red,
-//                            modifier = Modifier
-//
-//                                .padding(horizontal = 10.dp),
-//                            textAlign = TextAlign.Center
-//                        )
-//                        Text(
-//                            text = it.address,
-//                            color = Color.Red,
-//                            modifier = Modifier
-//                                .padding(horizontal = 10.dp),
-//                            textAlign = TextAlign.Center
-//                        )
-//                    }
-//                }
-        }
+                it.address != ""
+            }.let {
+                if(it.size > 0){
+                    it.forEach{
+                        ExamItem(it)
+                    }
+                }else{
+                    EmptyExam()
+                }
+            }
         Divider(
             modifier = Modifier
                 .padding(top = 10.dp),
@@ -602,6 +561,26 @@ fun ExamItem(
         Text(
             text = "学分:${examItem.xuefen}",
             fontSize = 10.sp
+        )
+    }
+}
+
+@Composable
+@Preview
+fun EmptyExam(){
+    Column(
+        modifier = Modifier
+            .padding(top = 10.dp)
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color(215, 215, 237))
+            .padding(10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "目前没有考试",
+            textAlign = TextAlign.Center,
         )
     }
 }
