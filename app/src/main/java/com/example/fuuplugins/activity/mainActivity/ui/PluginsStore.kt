@@ -3,6 +3,7 @@ package com.example.fuuplugins.activity.mainActivity.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -22,8 +23,12 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,23 +47,25 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.fuuplugins.R
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
-fun PluginsStore (
-
-){
-    val navHostController = rememberNavController()
-    NavHost(navController = navHostController, startDestination = "list"){
-        composable("list"){
-            PluginIntroductionList{
-                navHostController.navigate("detail")
+fun PluginsStore (){
+    Scaffold{  it->
+        Box(modifier = Modifier.padding(it)){
+            val navHostController = rememberNavController()
+            NavHost(navController = navHostController, startDestination = "list"){
+                composable("list"){
+                    PluginIntroductionList{
+                        navHostController.navigate("detail")
+                    }
+                }
+                composable("detail"){
+                    PluginDetail()
+                }
             }
         }
-        composable("detail"){
-            PluginDetail()
-        }
     }
-
 }
 
 @Composable

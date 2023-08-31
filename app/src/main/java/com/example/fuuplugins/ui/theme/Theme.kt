@@ -1,7 +1,9 @@
 package com.example.fuuplugins.ui.theme
 
 import android.app.Activity
+import android.graphics.Color
 import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -37,6 +39,7 @@ private val LightColorScheme = lightColorScheme(
     */
 )
 
+
 @Composable
 fun FUUPluginsTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -57,11 +60,11 @@ fun FUUPluginsTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            window.statusBarColor = Color.TRANSPARENT
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
         }
     }
-
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,

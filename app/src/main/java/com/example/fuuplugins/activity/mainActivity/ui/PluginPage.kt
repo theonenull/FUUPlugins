@@ -36,6 +36,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -84,15 +85,20 @@ fun PluginPage(){
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
 fun PluginTool(){
-    PluginAlreadyDownloaded()
-    val show  = remember {
-        mutableStateOf(true)
-    }
-    PluginDialog(show){
-        show.value = false
+    Scaffold{  it->
+        Box(modifier = Modifier.padding(it)){
+            PluginAlreadyDownloaded()
+            val show = remember {
+                mutableStateOf(true)
+            }
+            PluginDialog(show) {
+                show.value = false
+            }
+        }
     }
 }
 

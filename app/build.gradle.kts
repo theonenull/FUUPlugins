@@ -86,7 +86,6 @@ dependencies {
     implementation("com.github.jeziellago:compose-markdown:0.3.4")
     implementation("io.coil-kt:coil-compose:2.4.0")
 
-
     implementation ("androidx.lifecycle:lifecycle-runtime-compose:2.6.0")
     // network
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
@@ -112,5 +111,7 @@ dependencies {
     kapt ("androidx.room:room-compiler:$room_version")
 
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
+
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.31.0-alpha")
 
 }
