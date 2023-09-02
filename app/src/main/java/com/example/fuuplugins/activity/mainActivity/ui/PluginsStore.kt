@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
@@ -47,22 +48,19 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.fuuplugins.R
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
 fun PluginsStore (){
-    Scaffold{  it->
-        Box(modifier = Modifier.padding(it)){
-            val navHostController = rememberNavController()
-            NavHost(navController = navHostController, startDestination = "list"){
-                composable("list"){
-                    PluginIntroductionList{
-                        navHostController.navigate("detail")
-                    }
+    Box(modifier = Modifier.statusBarsPadding()){
+        val navHostController = rememberNavController()
+        NavHost(navController = navHostController, startDestination = "list"){
+            composable("list"){
+                PluginIntroductionList{
+                    navHostController.navigate("detail")
                 }
-                composable("detail"){
-                    PluginDetail()
-                }
+            }
+            composable("detail"){
+                PluginDetail()
             }
         }
     }

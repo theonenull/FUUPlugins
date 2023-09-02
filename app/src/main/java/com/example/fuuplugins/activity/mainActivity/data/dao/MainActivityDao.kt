@@ -2,6 +2,7 @@ package com.example.fuuplugins.activity.mainActivity.data.dao
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import com.example.fuuplugins.FuuApplication
 import com.example.fuuplugins.activity.mainActivity.data.bean.CourseBean
 import com.example.fuuplugins.activity.mainActivity.data.dao.CourseDao.CourseDao
 import com.example.fuuplugins.activity.mainActivity.data.dao.ExamDao.ExamDao
@@ -19,3 +20,9 @@ abstract class FuuDatabase : RoomDatabase() {
     abstract fun examDao() : ExamDao
 }
 
+suspend fun clearDb(){
+    FuuApplication.db.courseDao().clearAll()
+    FuuApplication.db.examDao().clearAll()
+    FuuApplication.db.yearOptionsDao().clearAll()
+    FuuApplication.db.massageDao().clearAll()
+}

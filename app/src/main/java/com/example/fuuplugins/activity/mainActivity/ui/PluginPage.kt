@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -89,15 +90,15 @@ fun PluginPage(){
 @Composable
 @Preview
 fun PluginTool(){
-    Scaffold{  it->
-        Box(modifier = Modifier.padding(it)){
-            PluginAlreadyDownloaded()
-            val show = remember {
-                mutableStateOf(true)
-            }
-            PluginDialog(show) {
-                show.value = false
-            }
+    Box(modifier = Modifier
+        .statusBarsPadding()
+    ){
+        PluginAlreadyDownloaded()
+        val show = remember {
+            mutableStateOf(true)
+        }
+        PluginDialog(show) {
+            show.value = false
         }
     }
 }

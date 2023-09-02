@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -130,6 +131,7 @@ fun ImagesOnly(
         FloatingActionButton(
             onClick = { jumpOver.invoke() },
             modifier = Modifier
+                .systemBarsPadding()
                 .offset(x = (-10).dp, y = (-10).dp)
                 .align(Alignment.BottomEnd),
             containerColor = color.value,

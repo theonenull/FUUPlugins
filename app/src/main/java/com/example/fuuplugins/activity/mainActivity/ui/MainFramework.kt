@@ -43,7 +43,9 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun MainFramework(
-    viewModel: MainFrameworkViewModel = viewModel()
+    viewModel: MainFrameworkViewModel = viewModel(),
+    navigationToLogin: () -> Unit = {},
+    activityToMarkdownActivity: () -> Unit = {}
 ){
     Column(
         modifier = Modifier
@@ -66,7 +68,9 @@ fun MainFramework(
                     viewModel.personDataFlow.collectAsStateWithLifecycle(),
                     viewModel.massageDataFlowFromCourse.collectAsStateWithLifecycle(initialValue = emptyList()),
                     viewModel.massageDataFlowFromMassageDao.collectAsStateWithLifecycle(initialValue = emptyList()),
-                    viewModel.examDataFlowFromExamDao.collectAsStateWithLifecycle(initialValue = emptyList())
+                    viewModel.examDataFlowFromExamDao.collectAsStateWithLifecycle(initialValue = emptyList()),
+                    navigationToLogin = navigationToLogin,
+                    activityToMarkdownActivity = activityToMarkdownActivity
                 )
             },
             content = {

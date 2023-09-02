@@ -7,14 +7,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
@@ -81,6 +82,8 @@ fun PersonPage(
     examDataFlowFromExamDao: State<List<ExamBean>> = remember {
         mutableStateOf(listOf())
     },
+    navigationToLogin: () -> Unit = {},
+    activityToMarkdownActivity: () -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -88,6 +91,8 @@ fun PersonPage(
             .width(300.dp)
             .verticalScroll(rememberScrollState())
             .background(Color.White)
+            .systemBarsPadding()
+            .navigationBarsPadding()
             .padding(vertical = 20.dp, horizontal = 10.dp)
     ){
         ProfileArea(
@@ -107,7 +112,10 @@ fun PersonPage(
         ExamNotificationArea(
             examDataFlowFromExamDao
         )
-        RibbonArea()
+        RibbonArea(
+            navigationToLogin = navigationToLogin,
+            activityToMarkdownActivity = activityToMarkdownActivity
+        )
     }
 }
 
@@ -229,7 +237,6 @@ fun ProfileArea(
             contentScale = ContentScale.FillBounds,
             alignment = Alignment.Center,
         )
-
         Text(
             text = userDataState.value.name ,
             fontWeight = FontWeight.Bold,
@@ -477,11 +484,26 @@ enum class ExamLabelType{
 
 @Composable
 @Preview
-fun RibbonArea(){
+fun RibbonArea(
+    navigationToLogin: () -> Unit = {},
+    activityToMarkdownActivity: () -> Unit = {}
+) {
     Column {
         RibbonButton.values().forEach{ item ->
             ExtendedFloatingActionButton(
-                onClick = { /* do something */ },
+                onClick = {
+                     when(item){
+                         RibbonButton.SignOut->{
+                             navigationToLogin()
+                         }
+                         RibbonButton.AboutUs->{
+                             activityToMarkdownActivity()
+                         }
+                         else->{
+
+                         }
+                     }
+                },
                 modifier = Modifier
                     .padding(top = 10.dp)
                     .fillMaxWidth(),

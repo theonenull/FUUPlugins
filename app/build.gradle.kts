@@ -114,4 +114,16 @@ dependencies {
 
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.31.0-alpha")
 
+    implementation ("androidx.glance:glance:1.0.0-alpha05")
+    implementation("androidx.glance:glance-appwidget:1.0.0-alpha05")
+
+//    // For AppWidgets support
+//    implementation ("androidx.glance:glance-appwidget:1.0.0-rc01")
+
+//    // For interop APIs with Material 2
+//    implementation ("androidx.glance:glance-material:1.0.0-rc01")
+//
+//    // For interop APIs with Material 3
+//    implementation ("androidx.glance:glance-material3:1.0.0-rc01")
+
 }

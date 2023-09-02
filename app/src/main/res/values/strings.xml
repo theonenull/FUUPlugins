@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">FUU_TEST</string>
     <string name="title_activity_compose_plugin">ComposePluginActivity</string>
+    <string name="title_activity_markdown_plugin">MarkdownActivity</string>
 </resources>

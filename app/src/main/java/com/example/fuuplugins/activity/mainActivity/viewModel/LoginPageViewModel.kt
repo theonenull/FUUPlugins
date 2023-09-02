@@ -42,6 +42,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 
 class LoginPageViewModel: ViewModel() {
@@ -157,10 +159,13 @@ class LoginPageViewModel: ViewModel() {
                             loginFailed.invoke()
                         }
                         LoginResult.LoginSuccess->{
+
                             easyToast("登录成功")
                             FuuApplication.instance.userDataStore.edit {
                                 it[UserPreferencesKey.USER_IS_LOGIN] = true
                             }
+                            setUserDataStore(UserPreferencesKey.USER_DATA_VALIDITY_PERIOD,
+                                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                             withContext(Dispatchers.Main){
                                 loginSuccessful.invoke()
                             }

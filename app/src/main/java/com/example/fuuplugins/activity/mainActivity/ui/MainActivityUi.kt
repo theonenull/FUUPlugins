@@ -9,7 +9,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.fuuplugins.FuuApplication
+import com.example.fuuplugins.activity.mainActivity.data.dao.clearDb
 import com.example.fuuplugins.config.dataStore.UserPreferencesKey
+import com.example.fuuplugins.config.dataStore.setUserDataStore
 import com.example.fuuplugins.config.dataStore.userDataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -20,7 +22,8 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun MainActivityUi(
-    mainActivityViewModel: MainActivityViewModel = viewModel()
+    mainActivityViewModel: MainActivityViewModel = viewModel(),
+    activityToMarkdownActivity: ()->Unit = {}
 ){
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "startPage") {
@@ -51,7 +54,21 @@ fun MainActivityUi(
             )
         }
         composable("mainFramework") {
-            MainFramework()
+            val scope = rememberCoroutineScope()
+            MainFramework(
+                navigationToLogin = {
+                    scope.launch(Dispatchers.IO) {
+                        clearDb()
+                        setUserDataStore(UserPreferencesKey.USER_IS_LOGIN,false)
+                        withContext(Dispatchers.Main){
+                            navController.navigate("login"){
+                                popUpTo("mainFramework") { inclusive = true }
+                            }
+                        }
+                    }
+                },
+                activityToMarkdownActivity = activityToMarkdownActivity
+            )
         }
     }
 }

@@ -72,6 +72,7 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.DisposableEffect
 
 import androidx.compose.runtime.State
 import androidx.compose.ui.graphics.ImageBitmap
@@ -102,6 +103,10 @@ fun ClassSchedule(
     LaunchedEffect(viewModel.currentWeek){
         viewModel.pageState.value.animateScrollToPage(viewModel.currentWeek.value - 1)
     }
+    LaunchedEffect(Unit){
+        viewModel.refreshInitData()
+    }
+
     Column {
         TopAppBar(
             navigationIcon = {
@@ -222,17 +227,29 @@ fun ClassSchedule(
                                                     EmptyClassCard(
                                                         item.kcStartTime - 1
                                                     )
-                                                } else {
+                                                }
+                                                else
+                                                {
                                                     EmptyClassCard(
                                                         it[index].kcStartTime - it[index - 1].kcEndTime - 1
                                                     )
                                                 }
-                                                ClassCard(
-                                                    item,
-                                                    detailAboutCourse = {
-                                                        viewModel.courseDialog.value = it
-                                                    }
-                                                )
+                                                if(index == 0){
+                                                    ClassCard(
+                                                        item,
+                                                        detailAboutCourse = {
+                                                            viewModel.courseDialog.value = it
+                                                        }
+                                                    )
+                                                }
+                                                else if(it[index].kcStartTime > it[index - 1].kcEndTime){
+                                                    ClassCard(
+                                                        item,
+                                                        detailAboutCourse = {
+                                                            viewModel.courseDialog.value = it
+                                                        }
+                                                    )
+                                                }
                                             }
                                         }
                                 }
@@ -352,7 +369,7 @@ fun EmptyClassCard(
     }
     Column (
         modifier = Modifier
-            .height((75 * weight).dp)
+            .height((75 * if (weight > 0) weight else 0).dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(5.dp))
             .background(Color.Transparent)

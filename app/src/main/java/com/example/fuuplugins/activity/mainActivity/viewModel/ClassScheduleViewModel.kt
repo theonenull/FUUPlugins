@@ -26,6 +26,7 @@ import com.example.fuuplugins.config.dataStore.DataManagePreferencesKey
 import com.example.fuuplugins.config.dataStore.UserPreferencesKey
 import com.example.fuuplugins.config.dataStore.getDataManageDataStore
 import com.example.fuuplugins.config.dataStore.setDataManageDataStore
+import com.example.fuuplugins.config.dataStore.setUserDataStore
 import com.example.fuuplugins.config.dataStore.setYearWeek
 import com.example.fuuplugins.config.dataStore.userDataStore
 import com.example.fuuplugins.util.catchWithMassage
@@ -54,6 +55,9 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalUnit
 
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -86,7 +90,7 @@ class ClassScheduleViewModel:ViewModel() {
             listOf()
         )
 
-    init {
+    fun refreshInitData(){
         viewModelScope.launch(Dispatchers.IO) {
             CourseRepository.getWeek()
                 .collectLatest {
@@ -191,9 +195,8 @@ class ClassScheduleViewModel:ViewModel() {
                             }
                             .collectLatest { initCourseBean ->
                                 FuuApplication.db.courseDao().clearByXq(xq.substring(0,4),xq.substring(5,6))
-                                FuuApplication.instance.userDataStore.edit {
-                                    it[UserPreferencesKey.USER_DATA_VALIDITY_PERIOD] = Clock.System.now().toString()
-                                }
+                                setUserDataStore(UserPreferencesKey.USER_DATA_VALIDITY_PERIOD,
+                                    LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                                 FuuApplication.db.courseDao().insertCourses(initCourseBean)
                             }
                     }
@@ -227,7 +230,7 @@ class ClassScheduleViewModel:ViewModel() {
 
     fun refreshCourse(){
         viewModelScope.launch(Dispatchers.IO) {
-            if(checkCookieEffectiveness()&&false){
+            if(checkCookieEffectiveness()){
                 getCourseFromNetwork()
             }
             else{
@@ -310,11 +313,10 @@ class ClassScheduleViewModel:ViewModel() {
                             easyToast("刷新失败")
                         }
                         LoginResult.LoginSuccess->{
+                            setUserDataStore(UserPreferencesKey.USER_DATA_VALIDITY_PERIOD,
+                                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                             easyToast("刷新成功")
                             refreshButtonState.value = ButtonState.Normal
-                            FuuApplication.instance.userDataStore.edit {
-                                it[UserPreferencesKey.USER_DATA_VALIDITY_PERIOD] = Clock.System.now().toString()
-                            }
                             getCourseFromNetwork()
                         }
                     }
@@ -354,13 +356,44 @@ class ClassScheduleViewModel:ViewModel() {
             it[UserPreferencesKey.USER_DATA_VALIDITY_PERIOD]
         }.first() ?: "")
         if(currentTime == ""){
-            return true
+            return false
         }
-        val timeZone = TimeZone.currentSystemDefault()
-        val timeForCheck  = Instant.parse(currentTime).plus(10, DateTimeUnit.MINUTE, timeZone).toLocalDateTime(TimeZone.currentSystemDefault())
-//        return timeForCheck < Clock.System.now().toLocalDateTime( TimeZone.currentSystemDefault())
-        return false
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss") // 指定日期时间字符串的格式
+        try {
+            val parsedDateTime = LocalDateTime.parse(currentTime, formatter)
+            println("解析后的日期时间: $parsedDateTime")
+            return parsedDateTime.plusMinutes(15).isAfter(LocalDateTime.now())
+        } catch (e: Exception) {
+            println("日期时间字符串无效: $e")
+            return false
+        }
     }
+}
 
+fun test(){
+    // 获取当前时间
+    val currentDateTime = LocalDateTime.now()
 
+    // 创建一个日期时间格式化器
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+
+    // 将当前时间转换为字符串
+    val currentDateTimeStr = currentDateTime.format(formatter)
+
+    println("当前时间: $currentDateTimeStr")
+
+    // 在需要的时候，您可以再次获取当前时间并进行比较
+    val anotherDateTime = LocalDateTime.now()
+    val anotherDateTimeStr = anotherDateTime.format(formatter)
+
+    println("另一个时间: $anotherDateTimeStr")
+
+    // 示例比较
+    if (currentDateTime.isBefore(anotherDateTime)) {
+        println("当前时间早于另一个时间")
+    } else if (currentDateTime.isAfter(anotherDateTime)) {
+        println("当前时间晚于另一个时间")
+    } else {
+        println("当前时间和另一个时间相同")
+    }
 }
