@@ -9,8 +9,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 class FuuApplication: Application() {
     companion object{
@@ -30,7 +28,6 @@ class FuuApplication: Application() {
     override fun onTerminate() {
         super.onTerminate()
         db.close()
-        applicationContext
         val scope = CoroutineScope(Job())
         scope.launch(Dispatchers.IO) {
             setUserDataStore(

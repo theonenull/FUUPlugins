@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.modifier.modifierLocalMapOf
 import androidx.compose.ui.unit.dp
 import com.example.fuuplugins.activity.BaseActivity
-import com.example.fuuplugins.activity.composePluginActivity.Greeting
+
 import com.example.fuuplugins.activity.mainActivity.ui.Markdown
 import com.example.fuuplugins.ui.theme.FUUPluginsTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController

@@ -5,16 +5,13 @@
       <entry key="AcademicYearSelectsDialog">
         <State />
       </entry>
-      <entry key="CaptchaLine">
+      <entry key="ColorMixingDialog">
         <State />
       </entry>
       <entry key="LoginDetailsPage">
         <State />
       </entry>
       <entry key="app">
-        <State />
-      </entry>
-      <entry key="useAppContext()">
         <State />
       </entry>
     </value>

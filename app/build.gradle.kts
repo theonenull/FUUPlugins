@@ -59,7 +59,9 @@ android {
 }
 
 dependencies {
-//    implementation(libs.androidx.material3.android)
+implementation(platform(libs.compose.bom))
+    androidTestImplementation(platform(libs.compose.bom))
+    //    implementation(libs.androidx.material3.android)
     val nav_version = "2.5.3"
     val room_version = "2.5.0"
 
@@ -125,5 +127,9 @@ dependencies {
 //
 //    // For interop APIs with Material 3
 //    implementation ("androidx.glance:glance-material3:1.0.0-rc01")
+
+    implementation("com.github.skydoves:colorpicker-compose:1.0.4")
+
+    implementation("com.github.theonenull:FuuInject:0.0.6")
 
 }

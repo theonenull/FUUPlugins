@@ -35,6 +35,5 @@ data class CourseBean(
 )
 
 fun CourseBean.computeTheXueNian():String{
-
     return "${this.kcYear}0${this.kcXuenian}}"
 }

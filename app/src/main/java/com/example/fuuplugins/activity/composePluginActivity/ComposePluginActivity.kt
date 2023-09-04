@@ -3,14 +3,36 @@ package com.example.fuuplugins.activity.composePluginActivity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.currentComposer
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.fuuplugins.FuuApplication
+import com.example.fuuplugins.activity.composePluginActivity.viewModel.PluginViewModel
+import com.example.fuuplugins.activity.mainActivity.data.bean.CourseBean
 import com.example.fuuplugins.ui.theme.FUUPluginsTheme
+import com.example.inject.bean.ExamBean
+import com.example.inject.bean.MassageBean
+import com.example.inject.bean.YearOptionsBean
+import com.example.inject.repository.Repository
+
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 class ComposePluginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,25 +44,142 @@ class ComposePluginActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Android")
+                    HostScreen()
                 }
             }
         }
     }
 }
 
+ class ActionForPlugin(): Repository {
+    override fun getCourse(): Flow<List<com.example.inject.bean.CourseBean>?> {
+        return if(true){
+            FuuApplication.db.courseDao().getAll().map { it ->
+                it.map {
+                    com.example.inject.bean.CourseBean(
+                        kcName = it.kcName,
+                        kcLocation = it.kcLocation,
+                        kcStartTime = it.kcStartTime,
+                        kcEndTime = it.kcEndTime,
+                        kcStartWeek = it.kcStartWeek,
+                        kcEndWeek = it.kcEndWeek,
+                        kcIsDouble = it.kcIsDouble,
+                        kcIsSingle = it.kcIsSingle,
+                        kcWeekend = it.kcWeekend,
+                        kcYear = it.kcYear,
+                        kcXuenian = it.kcXuenian,
+                        kcNote = it.kcNote,
+                        kcBackgroundId = it.kcBackgroundId,
+                        shoukeJihua = it.shoukeJihua,
+                        jiaoxueDagang = it.jiaoxueDagang,
+                        teacher = it.teacher,
+                        priority = it.priority,
+                        type = it.type
+                    )
+                }
+            }
+        }else{
+            flow{
+                emit(null)
+            }
+        }
+    }
+
+     override fun getExams(): Flow<List<ExamBean>?> {
+         return if(true){
+             FuuApplication.db.examDao().getAll().map { it ->
+                 it.map {
+                     com.example.inject.bean.ExamBean(
+                         examId = it.examId, name = it.name, xuefen = it.xuefen, teacher = it.teacher, address = it.address, zuohao = it.zuohao
+                     )
+                 }
+             }
+         }else{
+             flow{
+                 emit(null)
+             }
+         }
+     }
+
+     override fun getMassage(): Flow<List<MassageBean>?> {
+         return if(true){
+             FuuApplication.db.massageDao().getAll().map { it ->
+                 it.map {
+                     MassageBean(
+                         title = it.title, time = it.time, content = it.content, origin = it.origin
+                     )
+                 }
+             }
+         }else{
+             flow{
+                 emit(null)
+             }
+         }
+     }
+
+     override fun getYearOptions(): Flow<List<YearOptionsBean>?> {
+         return if(true){
+             FuuApplication.db.yearOptionsDao().getAll().map { it ->
+                 it.map {
+                     YearOptionsBean(
+                         yearOptionsId = it.yearOptionsId, yearOptionsName = it.yearOptionsName
+                     )
+                 }
+             }
+         }else{
+             flow{
+                 emit(null)
+             }
+         }
+     }
+ }
+
+
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
+fun HostScreen(viewModel: PluginViewModel = viewModel()) {
+    CommonLayout(viewModel) {
+        // 加载成功后调用插件中的Composable函数
+        if (viewModel.isLoadPluginComposablesSuccess) {
+            viewModel.pluginComposable1?.let { it(viewModel.obj, ActionForPlugin(), currentComposer, 0) }
+        }
+    }
 }
 
-@Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
-    FUUPluginsTheme {
-        Greeting("Android")
+private fun CommonLayout(
+    viewModel: PluginViewModel = viewModel(),
+    content: @Composable () -> Unit
+) {
+    val context = LocalContext.current
+    LaunchedEffect(Unit){
+
+        viewModel.loadPluginComposables()
+        viewModel.loadPlugin(context)
+        viewModel.mergeDex(context)
+    }
+    val isMergeDexSuccess = viewModel.isMergeDexSuccess.collectAsStateWithLifecycle()
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+//        Text(text = "当前是宿主中的Composable页面")
+//        Button(onClick = { viewModel.loadPlugin(context) }) {
+//            Text(text = "点击加载插件Classloader")
+//        }
+//        val isLoadSuccess = viewModel.isPluginLoadSuccess.collectAsStateWithLifecycle()
+//        Text(text = "插件Classloader是否加载成功：${isLoadSuccess.value}")
+
+//        if (isLoadSuccess.value) {
+////            Button(onClick = { viewModel.mergeDex(context) }) {
+////                Text(text = "点击合并插件Dex到宿主中")
+////            }
+//            val isMergeDexSuccess = viewModel.isMergeDexSuccess.collectAsStateWithLifecycle()
+//            Text(text = "合并插件Dex到宿主是否成功：${isMergeDexSuccess.value}")
+//
+//
+//        }
+        if (isMergeDexSuccess.value) {
+            content()
+        }
     }
 }
