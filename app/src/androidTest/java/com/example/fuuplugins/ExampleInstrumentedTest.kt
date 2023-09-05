@@ -15,6 +15,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 import org.junit.Assert.*
+import java.io.File
+import java.io.FileFilter
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -41,6 +43,22 @@ class ExampleInstrumentedTest {
                 .collectLatest {
                     debug(it.toString())
                 }
+        }
+    }
+
+    @Test
+    fun testPluginsLoad(){
+        val dir = File(FuuApplication.pluginsPath)
+        val fileFilter = FileFilter { file -> file.isDirectory && file.name.contains("plugin") }
+        val files = dir.listFiles(fileFilter)
+        println(files.size)
+        if (files.size == 0) {
+            println("目录不存在或它不是一个目录")
+        } else {
+            for (i in files.indices) {
+                val filename = files[i]
+                println(filename.toString())
+            }
         }
     }
 }

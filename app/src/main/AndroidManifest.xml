@@ -43,7 +43,7 @@
         </activity>
 
         <receiver
-            android:name=".CourseWidgetReceiver"
+            android:name=".weight.CourseWidgetReceiver"
             android:enabled="@bool/glance_appwidget_available"
             android:exported="false">
             <intent-filter>

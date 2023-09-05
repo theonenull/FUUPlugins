@@ -1,5 +1,6 @@
 package com.example.fuuplugins.activity.mainActivity.ui
 
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -43,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -52,6 +54,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -62,7 +65,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.fuuplugins.FuuApplication
 import com.example.fuuplugins.R
+import com.example.fuuplugins.activity.composePluginActivity.ComposePluginActivity
+import com.example.fuuplugins.plugin.PluginState
 import dev.jeziellago.compose.markdowntext.MarkdownText
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -178,11 +184,14 @@ fun PluginAlreadyDownloaded(){
                 .fillMaxSize()
                 .padding(horizontal = 10.dp, vertical = 10.dp),
         ){
+            val content = LocalContext.current
+            val list = FuuApplication.plugins.collectAsState()
             Carousel(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
             )
+
             LazyVerticalGrid(
                 columns = GridCells.Fixed(5),
                 modifier = Modifier
@@ -191,12 +200,19 @@ fun PluginAlreadyDownloaded(){
                     .weight(1f)
 
             ){
-                items(100){
+                items(list.value.filter {
+                    it.state == PluginState.SUCCESS
+                }.size){
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .wrapContentHeight()
                             .padding(10.dp)
+                            .clickable {
+                                val intent = Intent(content,ComposePluginActivity::class.java)
+                                intent.putExtra("index",it.toString())
+                                content.startActivity(intent)
+                            }
                     ){
                         Box(
                             modifier = Modifier
@@ -206,10 +222,11 @@ fun PluginAlreadyDownloaded(){
                                 .background(randomColor())
                         )
                         Text(
-                            text = "这是一个小插件",
+                            text = list.value[it].name,
                             softWrap = false,
                             maxLines = 1,
                             modifier = Modifier
+                                .fillMaxWidth()
                                 .padding( top = 5.dp )
                         )
                     }

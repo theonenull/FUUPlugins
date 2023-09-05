@@ -13,6 +13,10 @@ fun ViewModel.easyToast(msg:String){
     }
 }
 
+fun Any.easyToast(msg:String){
+    Toast.makeText(FuuApplication.instance,msg, Toast.LENGTH_SHORT).show()
+}
+
 fun ViewModel.normalToast(msg:String,duration:Int){
     viewModelScope.launch(Dispatchers.Main) {
         Toast.makeText(FuuApplication.instance,msg, duration).show()

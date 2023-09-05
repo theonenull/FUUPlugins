@@ -24,6 +24,7 @@ import com.example.fuuplugins.FuuApplication
 import com.example.fuuplugins.activity.composePluginActivity.viewModel.PluginViewModel
 import com.example.fuuplugins.activity.mainActivity.data.bean.CourseBean
 import com.example.fuuplugins.ui.theme.FUUPluginsTheme
+import com.example.fuuplugins.util.easyToast
 import com.example.inject.bean.ExamBean
 import com.example.inject.bean.MassageBean
 import com.example.inject.bean.YearOptionsBean
@@ -37,6 +38,12 @@ import kotlinx.coroutines.launch
 class ComposePluginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val index = intent.getStringExtra("index")?:""
+        if(index == ""){
+            easyToast("插件加载失败")
+            this.onDestroy()
+        }
+        val plugin = FuuApplication.plugins.value.get(index = index.toInt())
         setContent {
             FUUPluginsTheme {
                 // A surface container using the 'background' color from the theme
@@ -44,10 +51,19 @@ class ComposePluginActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    HostScreen()
+                    plugin.composeMethod?.invoke(
+                        plugin.pluginObject,
+                        ActionForPlugin(),
+                        currentComposer,
+                        0
+                    )
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
     }
 }
 
@@ -116,7 +132,6 @@ class ComposePluginActivity : ComponentActivity() {
              }
          }
      }
-
      override fun getYearOptions(): Flow<List<YearOptionsBean>?> {
          return if(true){
              FuuApplication.db.yearOptionsDao().getAll().map { it ->
