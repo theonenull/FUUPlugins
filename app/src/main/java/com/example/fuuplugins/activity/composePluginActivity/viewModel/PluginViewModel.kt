@@ -41,28 +41,17 @@ class PluginViewModel: ViewModel() {
     var pluginComposable2 by mutableStateOf<@Composable (Repository) -> Unit>({})
     var isLoadPluginComposablesSuccess by mutableStateOf(false)
 
-    fun loadPlugin(context: Context) {
-        viewModelScope.launch {
-
-        }
-    }
-
     fun mergeDex(context: Context) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                PluginManager.loadPlugin(context)
-                if (PluginManager.pluginClassLoader != null) {
-                    _isPluginLoadSuccess.value = true
-                }
-            }
-            withContext(Dispatchers.IO) {
-                if (PluginManager.mergeDexElement(context)) {
-                    _isMergeDexSuccess.value = true
-                }
-            }
-
-            withContext(Dispatchers.IO) {
                 try {
+                    PluginManager.loadPlugin(context)
+                    if (PluginManager.pluginClassLoader != null) {
+                        _isPluginLoadSuccess.value = true
+                    }
+                    if (PluginManager.mergeDexElement(context)) {
+                        _isMergeDexSuccess.value = true
+                    }
                     val composeProxyClass = PluginManager.loadClass(composeProxyClassName)
                     composeProxyClass?.let { proxyClass ->
                         val getContent1Method: Method = proxyClass.getDeclaredMethod(
@@ -82,12 +71,6 @@ class PluginViewModel: ViewModel() {
                     }
                 }
             }
-        }
-    }
-
-    fun loadPluginComposables() {
-        viewModelScope.launch {
-
         }
     }
 }

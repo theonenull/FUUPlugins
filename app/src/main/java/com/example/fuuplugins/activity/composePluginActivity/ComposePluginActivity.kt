@@ -152,9 +152,6 @@ private fun CommonLayout(
 ) {
     val context = LocalContext.current
     LaunchedEffect(Unit){
-
-        viewModel.loadPluginComposables()
-        viewModel.loadPlugin(context)
         viewModel.mergeDex(context)
     }
     val isMergeDexSuccess = viewModel.isMergeDexSuccess.collectAsStateWithLifecycle()
@@ -162,22 +159,6 @@ private fun CommonLayout(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-//        Text(text = "当前是宿主中的Composable页面")
-//        Button(onClick = { viewModel.loadPlugin(context) }) {
-//            Text(text = "点击加载插件Classloader")
-//        }
-//        val isLoadSuccess = viewModel.isPluginLoadSuccess.collectAsStateWithLifecycle()
-//        Text(text = "插件Classloader是否加载成功：${isLoadSuccess.value}")
-
-//        if (isLoadSuccess.value) {
-////            Button(onClick = { viewModel.mergeDex(context) }) {
-////                Text(text = "点击合并插件Dex到宿主中")
-////            }
-//            val isMergeDexSuccess = viewModel.isMergeDexSuccess.collectAsStateWithLifecycle()
-//            Text(text = "合并插件Dex到宿主是否成功：${isMergeDexSuccess.value}")
-//
-//
-//        }
         if (isMergeDexSuccess.value) {
             content()
         }

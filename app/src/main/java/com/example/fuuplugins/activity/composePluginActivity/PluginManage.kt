@@ -2,8 +2,10 @@ package com.example.fuuplugins.activity.composePluginActivity
 
 import android.annotation.SuppressLint
 import android.content.Context
+import com.example.fuuplugins.FuuApplication
 import dalvik.system.DexClassLoader
 import java.io.File
+import java.io.FileInputStream
 import java.lang.reflect.Array.newInstance
 import java.lang.reflect.Field
 
@@ -14,7 +16,7 @@ class PluginManager private constructor() {
         var pluginClassLoader : DexClassLoader? = null
 
         fun loadPlugin(context: Context) {
-            val inputStream = context.assets.open("news_lib.apk")
+            val inputStream =FileInputStream(File(FuuApplication.pluginsPath,"news_lib.apk"))
             val filesDir = context.externalCacheDir
             val apkFile = File(filesDir?.absolutePath, "news_lib.apk")
             apkFile.writeBytes(inputStream.readBytes())
