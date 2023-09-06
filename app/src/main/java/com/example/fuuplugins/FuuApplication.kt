@@ -10,6 +10,7 @@ import com.example.fuuplugins.config.dataStore.setUserDataStore
 import com.example.fuuplugins.plugin.Plugin
 import com.example.fuuplugins.plugin.PluginConfig
 import com.example.fuuplugins.plugin.PluginManager.Companion.loadJson
+import com.example.fuuplugins.plugin.PluginManager.Companion.loadMarkDown
 import com.example.fuuplugins.plugin.PluginState
 import com.example.inject.repository.Repository
 import kotlinx.coroutines.CoroutineScope
@@ -95,8 +96,9 @@ fun CoroutineScope.pluginInit(){
                     minFuuVersion = null,
                     maxFuuVersion = null,
                     apkName = null,
-                    developer = null
-                )
+                    developer = null,
+                ),
+                markdown = null
             )
             val packageName = "com.example.testplugin"+"."
             try {
@@ -130,6 +132,13 @@ fun CoroutineScope.pluginInit(){
                 val pluginConfigFile = File(file,"plugin.json")
                 val config = loadJson(pluginConfigFile)
                 plugin.pluginConfig = config
+            }catch (e:Exception) {
+                plugin.state = PluginState.ERROR
+            }
+            try {
+                val markdownFile = File(file,"plugin.md")
+                val markdown = loadMarkDown(markdownFile)
+                plugin.markdown = markdown
             }catch (e:Exception) {
                 plugin.state = PluginState.ERROR
             }

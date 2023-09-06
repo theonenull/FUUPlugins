@@ -101,7 +101,6 @@ class PluginManager private constructor() {
 
 
         fun loadJson(file: File): PluginConfig {
-            // 获得assets资源管理器（assets中的文件无法直接访问，可以使用AssetManager访问）
             val inputStreamReader = FileReader(
                 file
             ) // 使用IO流读取json文件内容
@@ -119,6 +118,21 @@ class PluginManager private constructor() {
         fun <T> jsonToObject(json: String?, type: Class<T>?): T {
             val gson = Gson()
             return gson.fromJson(json, type)
+        }
+
+        fun loadMarkDown(file: File): String {
+            val inputStreamReader = FileReader(
+                file
+            ) // 使用IO流读取json文件内容
+            val br = BufferedReader(inputStreamReader)
+            var line: String?
+            val builder = StringBuilder()
+            while (br.readLine().also { line = it } != null) {
+                builder.append(line+"\n")
+            }
+            br.close()
+            inputStreamReader.close()
+            return builder.toString().trimIndent()
         }
     }
 }

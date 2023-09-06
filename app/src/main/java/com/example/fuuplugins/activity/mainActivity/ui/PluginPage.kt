@@ -8,6 +8,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,6 +51,8 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -78,6 +81,7 @@ import coil.request.ImageRequest
 import com.example.fuuplugins.FuuApplication
 import com.example.fuuplugins.R
 import com.example.fuuplugins.activity.composePluginActivity.ComposePluginActivity
+import com.example.fuuplugins.plugin.Plugin
 import com.example.fuuplugins.plugin.PluginState
 import com.example.fuuplugins.util.easyToast
 import dev.jeziellago.compose.markdowntext.MarkdownText
@@ -108,15 +112,24 @@ fun PluginPage(){
 @Composable
 @Preview
 fun PluginTool(){
+    val showPlugin = remember {
+        mutableStateOf<Plugin?>(null)
+    }
     Box(modifier = Modifier
         .statusBarsPadding()
     ){
-        PluginAlreadyDownloaded()
-        val show = remember {
-            mutableStateOf(true)
-        }
-        PluginDialog(show) {
-            show.value = false
+        PluginAlreadyDownloaded(
+            pluginLongClick = {
+                showPlugin.value = it
+            }
+        )
+        showPlugin.value?.let {
+            PluginDialog(
+                it,
+                onDismissRequest = {
+                    showPlugin.value = null
+                }
+            )
         }
     }
 }
@@ -184,10 +197,12 @@ private fun Carousel(
 }
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
-fun PluginAlreadyDownloaded(){
-
+fun PluginAlreadyDownloaded(
+    pluginLongClick:(Plugin)->Unit = {}
+){
     Box(
         modifier = Modifier.fillMaxSize()
     ){
@@ -223,15 +238,20 @@ fun PluginAlreadyDownloaded(){
                                     Color.Red
                                 }
                             )
-                            .clickable {
-                                if (list.value[it].state == PluginState.SUCCESS) {
-                                    val intent = Intent(content, ComposePluginActivity::class.java)
-                                    intent.putExtra("index", it.toString())
-                                    content.startActivity(intent)
-                                } else {
-                                    easyToast("插件加载失败")
+                            .combinedClickable(
+                                onClick = {
+                                    if (list.value[it].state == PluginState.SUCCESS) {
+                                        val intent = Intent(content, ComposePluginActivity::class.java)
+                                        intent.putExtra("index", it.toString())
+                                        content.startActivity(intent)
+                                    } else {
+                                        easyToast("插件加载失败")
+                                    }
+                                },
+                                onLongClick = {
+                                    pluginLongClick.invoke(list.value[it])
                                 }
-                            }
+                            )
                     ){
                         if(list.value[it].iconPath != null){
                             Image(
@@ -281,7 +301,6 @@ fun PluginAlreadyDownloaded(){
                 .offset(x = (-15).dp, y = (-15).dp)
                 .align(Alignment.BottomEnd)
         ) {
-
             Crossfade(targetState = clickable.value, label = "") {
                 if(it){
                     Icon(imageVector = Icons.Filled.Build, contentDescription = null)
@@ -296,66 +315,95 @@ fun PluginAlreadyDownloaded(){
 }
 
 @Composable
-@Preview
 fun PluginDialog(
-    show : State<Boolean> = remember {
-        mutableStateOf(true)
-    } ,
-    onDismissRequest : () -> Unit = {}
+    plugin:Plugin,
+    onDismissRequest : () -> Unit
 ){
-    if(show.value){
-        Dialog(onDismissRequest = onDismissRequest) {
-            Column (
-                Modifier
-                    .fillMaxHeight(0.8f)
+    Dialog(onDismissRequest = onDismissRequest) {
+        Column (
+            Modifier
+                .fillMaxHeight(0.85f)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color(214, 214, 236))
+                .verticalScroll(rememberScrollState())
+                .padding(10.dp),
+        ){
+            Row(
+                modifier = Modifier
+                    .padding(bottom = 20.dp)
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(randomColor())
-                    .verticalScroll(rememberScrollState())
-                    .padding(10.dp),
-            ){
-                Row(
+                    .height(50.dp)
+            ) {
+                Image(
+                    painter = if(plugin.iconPath == null) painterResource(id = R.drawable.img) else rememberAsyncImagePainter(
+                        ImageRequest
+                            .Builder(LocalContext.current)
+                            .data(data = Uri.fromFile(File(plugin.iconPath!!)))
+                            .build()
+                    ),
+                    contentDescription = null,
                     modifier = Modifier
-                        .padding(bottom = 20.dp)
-                        .fillMaxWidth()
-                        .height(50.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.img),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxHeight(1f)
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(100)),
-                        contentScale = ContentScale.FillBounds
-                    )
-                    Text(
-                        text = "空教室",
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 20.dp)
-                            .align(Alignment.CenterVertically),
-                        softWrap = false,
-                        maxLines = 1,
-                        textAlign = TextAlign.End,
-                        fontSize = 20.sp,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Image(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxHeight(0.7f)
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(100))
-                            .background(Color.Gray)
-                            .clickable { onDismissRequest.invoke() }
-                            .padding(5.dp)
-                            .align(Alignment.CenterVertically),
-                        contentScale = ContentScale.FillBounds
-                    )
-                }
-                PluginMarkdown()
+                        .fillMaxHeight(1f)
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(100)),
+                    contentScale = ContentScale.FillBounds
+                )
+                Text(
+                    text = plugin.pluginConfig.apkName ?: "加载失败",
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 20.dp)
+                        .align(Alignment.CenterVertically),
+                    softWrap = false,
+                    maxLines = 1,
+                    textAlign = TextAlign.End,
+                    fontSize = 20.sp,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Image(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxHeight(0.7f)
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(100))
+                        .background(Color.Gray)
+                        .clickable { onDismissRequest.invoke() }
+                        .padding(5.dp)
+                        .align(Alignment.CenterVertically),
+                    contentScale = ContentScale.FillBounds
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .padding(bottom = 20.dp)
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .height(30.dp)
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(100)),
+                    contentScale = ContentScale.FillBounds
+                )
+                Text(
+                    text =  if(plugin.pluginConfig.developer!=null) "开发者:${plugin.pluginConfig.developer}" else "未知开发者",
+                    modifier = Modifier
+                        .weight(1f)
+                        .align(Alignment.CenterVertically),
+                    softWrap = false,
+                    maxLines = 1,
+                    textAlign = TextAlign.Start,
+                    fontSize = 13.sp,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            plugin.markdown?.let {
+                PluginMarkdown(it)
             }
         }
     }

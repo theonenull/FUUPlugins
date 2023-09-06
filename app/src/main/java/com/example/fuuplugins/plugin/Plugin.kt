@@ -7,19 +7,9 @@ data class Plugin(
     var composeMethod: Method?,
     var state: PluginState,
     var pluginObject: Any?,
-    var pluginConfig:PluginConfig
-){
-    override fun equals(other: Any?): Boolean {
-        return this.composeMethod == this.composeMethod
-    }
-
-    override fun hashCode(): Int {
-        var result = iconPath?.hashCode() ?: 0
-        result = 31 * result + (composeMethod?.hashCode() ?: 0)
-        result = 31 * result + state.hashCode()
-        return result
-    }
-}
+    var pluginConfig:PluginConfig,
+    var markdown:String?
+)
 
 enum class PluginState{
     ERROR,
