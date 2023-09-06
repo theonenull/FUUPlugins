@@ -31,21 +31,17 @@ import java.io.File
 class MarkdownActivity: BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        val markdown = intent.getStringExtra("markdown")?:""
+        val markdown = intent.getStringExtra("markdown")?:""
         setContent {
             FUUPluginsTheme {
                 val systemUiController = rememberSystemUiController()
                 val useDarkIcons = !isSystemInDarkTheme()
-                var markdown by remember{
-                    mutableStateOf("")
-                }
                 LaunchedEffect(systemUiController, useDarkIcons) {
                     systemUiController.setSystemBarsColor(
                         color = Color.Transparent,
                         darkIcons = useDarkIcons,
                         isNavigationBarContrastEnforced = false,
                     )
-                    markdown = PluginManager.loadMarkDown(File(FuuApplication.pluginsPathForApk,"west2.md"))
                 }
 
                 // A surface container using the 'background' color from the theme

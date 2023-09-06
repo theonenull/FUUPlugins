@@ -38,6 +38,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.sharp.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -377,7 +378,7 @@ fun PluginDialog(
             }
             Row(
                 modifier = Modifier
-                    .padding(bottom = 20.dp)
+                    .padding(bottom = 10.dp)
                     .fillMaxWidth()
                     .wrapContentHeight()
             ) {
@@ -391,7 +392,35 @@ fun PluginDialog(
                     contentScale = ContentScale.FillBounds
                 )
                 Text(
-                    text =  if(plugin.pluginConfig.developer!=null) "开发者:${plugin.pluginConfig.developer}" else "未知开发者",
+                    text =  if(plugin.pluginConfig.developer!=null) "版本:${plugin.pluginConfig.developer}" else "未知开发者",
+                    modifier = Modifier
+                        .weight(1f)
+                        .align(Alignment.CenterVertically),
+                    softWrap = false,
+                    maxLines = 1,
+                    textAlign = TextAlign.Start,
+                    fontSize = 13.sp,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .padding(bottom = 10.dp)
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.blanch),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .height(30.dp)
+                        .aspectRatio(1f)
+                        .padding(5.dp)
+                        .clip(RoundedCornerShape(100)),
+                    contentScale = ContentScale.FillBounds
+                )
+                Text(
+                    text =  if(plugin.pluginConfig.version!=null) "开发者:${plugin.pluginConfig.version}" else "未知版本",
                     modifier = Modifier
                         .weight(1f)
                         .align(Alignment.CenterVertically),
