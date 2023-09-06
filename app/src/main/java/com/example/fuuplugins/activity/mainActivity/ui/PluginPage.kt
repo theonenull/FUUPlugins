@@ -1,7 +1,9 @@
 package com.example.fuuplugins.activity.mainActivity.ui
 
 import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -30,13 +32,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.sharp.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -53,6 +58,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -65,14 +71,20 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import coil.compose.rememberImagePainter
+import coil.request.ImageRequest
 import com.example.fuuplugins.FuuApplication
 import com.example.fuuplugins.R
 import com.example.fuuplugins.activity.composePluginActivity.ComposePluginActivity
 import com.example.fuuplugins.plugin.PluginState
+import com.example.fuuplugins.util.easyToast
 import dev.jeziellago.compose.markdowntext.MarkdownText
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.Timer
 import java.util.TimerTask
 
@@ -191,55 +203,93 @@ fun PluginAlreadyDownloaded(){
                     .fillMaxWidth()
                     .height(200.dp)
             )
-
             LazyVerticalGrid(
                 columns = GridCells.Fixed(5),
                 modifier = Modifier
                     .padding(top = 20.dp)
                     .fillMaxWidth()
                     .weight(1f)
-
             ){
-                items(list.value.filter {
-                    it.state == PluginState.SUCCESS
-                }.size){
+                items(list.value.size){
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .wrapContentHeight()
                             .padding(10.dp)
+                            .background(
+                                if (list.value[it].state == PluginState.SUCCESS) {
+                                    Color.Transparent
+                                } else {
+                                    Color.Red
+                                }
+                            )
                             .clickable {
-                                val intent = Intent(content,ComposePluginActivity::class.java)
-                                intent.putExtra("index",it.toString())
-                                content.startActivity(intent)
+                                if (list.value[it].state == PluginState.SUCCESS) {
+                                    val intent = Intent(content, ComposePluginActivity::class.java)
+                                    intent.putExtra("index", it.toString())
+                                    content.startActivity(intent)
+                                } else {
+                                    easyToast("插件加载失败")
+                                }
                             }
                     ){
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f)
-                                .padding(10.dp)
-                                .background(randomColor())
-                        )
+                        if(list.value[it].iconPath != null){
+                            Image(
+                                painter = rememberAsyncImagePainter(
+                                    ImageRequest
+                                        .Builder(LocalContext.current)
+                                        .data(data = Uri.fromFile(File(list.value[it].iconPath!!)))
+                                        .build()
+                                ),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .padding(10.dp),
+                                contentScale = ContentScale.FillBounds
+                            )
+                        }else{
+                            Image(
+                                imageVector = Icons.Filled.Close ,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .padding(10.dp),
+                                contentScale = ContentScale.FillBounds
+                            )
+                        }
                         Text(
-                            text = list.value[it].name,
+                            text = list.value[it].pluginConfig.apkName?:"加载失败",
                             softWrap = false,
                             maxLines = 1,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding( top = 5.dp )
+                                .padding(top = 5.dp),
+                            textAlign = TextAlign.Center,
+                            fontSize = 10.sp,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
             }
         }
+        val clickable = FuuApplication.isLoading.collectAsState()
         FloatingActionButton(
-            onClick = { /*TODO*/ },
+            onClick = { if (!clickable.value) FuuApplication.reloadPlugins() else (Unit) },
             modifier = Modifier
                 .offset(x = (-15).dp, y = (-15).dp)
                 .align(Alignment.BottomEnd)
         ) {
 
+            Crossfade(targetState = clickable.value, label = "") {
+                if(it){
+                    Icon(imageVector = Icons.Filled.Build, contentDescription = null)
+                }
+                else{
+                    Icon(imageVector = Icons.Filled.Refresh, contentDescription = null)
+                }
+            }
         }
     }
 

@@ -43,7 +43,7 @@ class MainActivity : BaseActivity() {
                 }
                 MainActivityUi(
                     activityToMarkdownActivity = {
-                        val intent = Intent(this,ComposePluginActivity::class.java)
+                        val intent = Intent(this,MarkdownActivity::class.java)
                         intent.putExtra("markdown","## Hey, this is us \uD83D\uDC4B\n" +
                         "\n" +
                                 "![Image](https://www.w2fzu.com/usr/uploads/logos/logo-round.png)"+

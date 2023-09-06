@@ -1,30 +1,37 @@
-package com.example.fuuplugins.activity.composePluginActivity
+package com.example.fuuplugins.plugin
 
 import android.annotation.SuppressLint
 import android.content.Context
-import com.example.fuuplugins.FuuApplication
+import com.google.gson.Gson
 import dalvik.system.DexClassLoader
+import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileReader
 import java.lang.reflect.Array.newInstance
 import java.lang.reflect.Field
+
 
 class PluginManager private constructor() {
 
     companion object {
 
-        var pluginClassLoader : DexClassLoader? = null
+        var pluginClassLoader: DexClassLoader? = null
 
-        fun loadPlugin(context: Context) {
-            val inputStream =FileInputStream(File(FuuApplication.pluginsPath,"news_lib.apk"))
+        fun loadPlugin(context: Context, file: File) {
+            val inputStream = FileInputStream(File(file.path, "plugin.apk"))
             val filesDir = context.externalCacheDir
-            val apkFile = File(filesDir?.absolutePath, "news_lib.apk")
+            val apkFile = File(filesDir?.absolutePath, "plugin.apk")
             apkFile.writeBytes(inputStream.readBytes())
-
             val dexFile = File(filesDir, "dex")
             if (!dexFile.exists()) dexFile.mkdirs()
             println("输出dex路径: $dexFile")
-            pluginClassLoader = DexClassLoader(apkFile.absolutePath, dexFile.absolutePath, null, this.javaClass.classLoader)
+            pluginClassLoader = DexClassLoader(
+                apkFile.absolutePath,
+                dexFile.absolutePath,
+                null,
+                this.javaClass.classLoader
+            )
         }
 
         fun loadClass(className: String): Class<*>? {
@@ -47,7 +54,7 @@ class PluginManager private constructor() {
          * 4、最后通过反射将新的 Element[] 赋值给宿主的 dexElements。
          */
         @SuppressLint("DiscouragedPrivateApi")
-        fun mergeDexElement(context: Context) : Boolean{
+        fun mergeDexElement(context: Context): Boolean {
             try {
                 val clazz = Class.forName("dalvik.system.BaseDexClassLoader")
                 val pathListField: Field = clazz.getDeclaredField("pathList")
@@ -91,5 +98,35 @@ class PluginManager private constructor() {
             }
             return false
         }
+
+
+        fun loadJson(file: File): PluginConfig {
+            // 获得assets资源管理器（assets中的文件无法直接访问，可以使用AssetManager访问）
+            val inputStreamReader = FileReader(
+                file
+            ) // 使用IO流读取json文件内容
+            val br = BufferedReader(inputStreamReader)
+            var line: String?
+            val builder = StringBuilder()
+            while (br.readLine().also { line = it } != null) {
+                builder.append(line)
+            }
+            br.close()
+            inputStreamReader.close()
+            return jsonToObject(builder.toString(), PluginConfig::class.java)
+        }
+
+        fun <T> jsonToObject(json: String?, type: Class<T>?): T {
+            val gson = Gson()
+            return gson.fromJson(json, type)
+        }
     }
 }
+
+data class PluginConfig(
+    val version : String? = null,
+    val minFuuVersion : String? = null,
+    val maxFuuVersion : String? = null,
+    val apkName : String? = null ,
+    val developer : String? = null
+)

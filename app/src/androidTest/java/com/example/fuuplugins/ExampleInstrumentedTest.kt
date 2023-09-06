@@ -48,7 +48,7 @@ class ExampleInstrumentedTest {
 
     @Test
     fun testPluginsLoad(){
-        val dir = File(FuuApplication.pluginsPath)
+        val dir = File(FuuApplication.pluginsPathForApk)
         val fileFilter = FileFilter { file -> file.isDirectory && file.name.contains("plugin") }
         val files = dir.listFiles(fileFilter)
         println(files.size)

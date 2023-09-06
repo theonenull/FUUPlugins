@@ -150,32 +150,32 @@ class ComposePluginActivity : ComponentActivity() {
  }
 
 
-@Composable
-fun HostScreen(viewModel: PluginViewModel = viewModel()) {
-    CommonLayout(viewModel) {
-        // 加载成功后调用插件中的Composable函数
-        if (viewModel.isLoadPluginComposablesSuccess) {
-            viewModel.pluginComposable1?.let { it(viewModel.obj, ActionForPlugin(), currentComposer, 0) }
-        }
-    }
-}
+//@Composable
+//fun HostScreen(viewModel: PluginViewModel = viewModel()) {
+//    CommonLayout(viewModel) {
+//        // 加载成功后调用插件中的Composable函数
+//        if (viewModel.isLoadPluginComposablesSuccess) {
+//            viewModel.pluginComposable1?.let { it(viewModel.obj, ActionForPlugin(), currentComposer, 0) }
+//        }
+//    }
+//}
 
-@Composable
-private fun CommonLayout(
-    viewModel: PluginViewModel = viewModel(),
-    content: @Composable () -> Unit
-) {
-    val context = LocalContext.current
-    LaunchedEffect(Unit){
-        viewModel.mergeDex(context)
-    }
-    val isMergeDexSuccess = viewModel.isMergeDexSuccess.collectAsStateWithLifecycle()
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        if (isMergeDexSuccess.value) {
-            content()
-        }
-    }
-}
+//@Composable
+//private fun CommonLayout(
+//    viewModel: PluginViewModel = viewModel(),
+//    content: @Composable () -> Unit
+//) {
+//    val context = LocalContext.current
+//    LaunchedEffect(Unit){
+//        viewModel.mergeDex(context)
+//    }
+//    val isMergeDexSuccess = viewModel.isMergeDexSuccess.collectAsStateWithLifecycle()
+//    Column(
+//        horizontalAlignment = Alignment.CenterHorizontally,
+//        verticalArrangement = Arrangement.spacedBy(20.dp)
+//    ) {
+//        if (isMergeDexSuccess.value) {
+//            content()
+//        }
+//    }
+//}
