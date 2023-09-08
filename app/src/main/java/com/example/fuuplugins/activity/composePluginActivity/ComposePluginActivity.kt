@@ -21,10 +21,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fuuplugins.FuuApplication
-import com.example.fuuplugins.activity.composePluginActivity.viewModel.PluginViewModel
 import com.example.fuuplugins.activity.mainActivity.data.bean.CourseBean
 import com.example.fuuplugins.ui.theme.FUUPluginsTheme
 import com.example.fuuplugins.util.easyToast
+import com.example.fuuplugins.util.normalToast
 import com.example.inject.bean.ExamBean
 import com.example.inject.bean.MassageBean
 import com.example.inject.bean.YearOptionsBean
@@ -40,7 +40,7 @@ class ComposePluginActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val index = intent.getStringExtra("index")?:""
         if(index == ""){
-            easyToast("插件加载失败")
+            normalToast("插件加载失败")
             this.onDestroy()
         }
         val plugin = FuuApplication.plugins.value.get(index = index.toInt())
@@ -150,32 +150,3 @@ class ComposePluginActivity : ComponentActivity() {
  }
 
 
-//@Composable
-//fun HostScreen(viewModel: PluginViewModel = viewModel()) {
-//    CommonLayout(viewModel) {
-//        // 加载成功后调用插件中的Composable函数
-//        if (viewModel.isLoadPluginComposablesSuccess) {
-//            viewModel.pluginComposable1?.let { it(viewModel.obj, ActionForPlugin(), currentComposer, 0) }
-//        }
-//    }
-//}
-
-//@Composable
-//private fun CommonLayout(
-//    viewModel: PluginViewModel = viewModel(),
-//    content: @Composable () -> Unit
-//) {
-//    val context = LocalContext.current
-//    LaunchedEffect(Unit){
-//        viewModel.mergeDex(context)
-//    }
-//    val isMergeDexSuccess = viewModel.isMergeDexSuccess.collectAsStateWithLifecycle()
-//    Column(
-//        horizontalAlignment = Alignment.CenterHorizontally,
-//        verticalArrangement = Arrangement.spacedBy(20.dp)
-//    ) {
-//        if (isMergeDexSuccess.value) {
-//            content()
-//        }
-//    }
-//}

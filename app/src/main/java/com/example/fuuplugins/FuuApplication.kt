@@ -1,18 +1,21 @@
 package com.example.fuuplugins
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.Composer
 import androidx.room.Room
-import com.example.fuuplugins.plugin.PluginManager
 import com.example.fuuplugins.activity.mainActivity.data.dao.FuuDatabase
 import com.example.fuuplugins.config.dataStore.UserPreferencesKey
 import com.example.fuuplugins.config.dataStore.setUserDataStore
 import com.example.fuuplugins.plugin.Plugin
 import com.example.fuuplugins.plugin.PluginConfig
+import com.example.fuuplugins.plugin.PluginManager
 import com.example.fuuplugins.plugin.PluginManager.Companion.loadJson
 import com.example.fuuplugins.plugin.PluginManager.Companion.loadMarkDown
 import com.example.fuuplugins.plugin.PluginState
 import com.example.inject.repository.Repository
+import com.tencent.smtt.sdk.QbSdk
+import com.tencent.smtt.sdk.QbSdk.PreInitCallback
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,6 +25,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileFilter
 import java.lang.reflect.Method
+
 
 class FuuApplication: Application() {
 
@@ -57,6 +61,17 @@ class FuuApplication: Application() {
             pluginsFile.mkdir()
         }
         pluginsScope.pluginInit()
+        QbSdk.initX5Environment(this, object : PreInitCallback {
+            override fun onCoreInitFinished() {
+                // X5内核加载完成后回调
+                Log.i("onCoreInitFinished"," -----------")
+            }
+
+            override fun onViewInitFinished(b: Boolean) {
+                // 传入参数b为true表示加载X5成功，false表示加载失败
+                Log.i("onViewInitFinished","$b -----------")
+            }
+        })
     }
 
 

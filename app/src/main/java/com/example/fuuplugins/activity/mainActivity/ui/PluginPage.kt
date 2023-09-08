@@ -85,6 +85,7 @@ import com.example.fuuplugins.activity.composePluginActivity.ComposePluginActivi
 import com.example.fuuplugins.plugin.Plugin
 import com.example.fuuplugins.plugin.PluginState
 import com.example.fuuplugins.util.easyToast
+import com.example.fuuplugins.util.normalToast
 import dev.jeziellago.compose.markdowntext.MarkdownText
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -246,7 +247,7 @@ fun PluginAlreadyDownloaded(
                                         intent.putExtra("index", it.toString())
                                         content.startActivity(intent)
                                     } else {
-                                        easyToast("插件加载失败")
+                                        normalToast("插件加载失败")
                                     }
                                 },
                                 onLongClick = {

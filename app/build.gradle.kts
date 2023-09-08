@@ -60,6 +60,8 @@ android {
 
 dependencies {
 implementation(platform(libs.compose.bom))
+    implementation(platform(libs.compose.bom))
+    androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(platform(libs.compose.bom))
     //    implementation(libs.androidx.material3.android)
     val nav_version = "2.5.3"
@@ -131,5 +133,7 @@ implementation(platform(libs.compose.bom))
     implementation("com.github.skydoves:colorpicker-compose:1.0.4")
 
     implementation("com.github.theonenull:FuuInject:0.0.6")
+
+    implementation ("com.tencent.tbs:tbssdk:44286")
 
 }

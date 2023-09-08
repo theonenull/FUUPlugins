@@ -20,16 +20,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,21 +35,30 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.navigation.NavHostController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.fuuplugins.R
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import com.example.fuuplugins.activity.mainActivity.network.bean.Data
+import com.example.fuuplugins.activity.mainActivity.repositories.test_server
+import com.example.fuuplugins.activity.mainActivity.viewModel.PluginStoreViewModel
 
 @Composable
 @Preview
-fun PluginsStore (){
+fun PluginsStore (
+    viewModel: PluginStoreViewModel = viewModel()
+){
     Box(modifier = Modifier.statusBarsPadding()){
         val navHostController = rememberNavController()
+        val pluginListState = viewModel.pluginListFromNetwork.collectAsStateWithLifecycle()
         NavHost(navController = navHostController, startDestination = "list"){
             composable("list"){
-                PluginIntroductionList{
+                PluginIntroductionList(
+                    pluginListFromNetwork = pluginListState
+                ){
                     navHostController.navigate("detail")
                 }
             }
@@ -153,25 +156,30 @@ fun PluginDetail(){
 }
 
 @Composable
-@Preview
 fun PluginIntroductionList(
-    click : ()->Unit = {}
+    pluginListFromNetwork: State<List<Data>?>,
+    click: () -> Unit = {},
 ){
-    LazyColumn(
-        Modifier
-            .fillMaxSize()
-            .padding(horizontal = 10.dp)
-    ){
-        items(20){
-            PluginIntroductionItem(click)
+    pluginListFromNetwork.value?.let { pluginList ->
+        LazyColumn(
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 10.dp)
+        ){
+            items(pluginList.size){
+                PluginIntroductionItem(
+                    pluginList[it],
+                    click
+                )
+            }
         }
     }
 }
 
 @Composable
-@Preview
 fun PluginIntroductionItem(
-    click : ()->Unit = {}
+    plugin: Data,
+    click: () -> Unit = {}
 ){
     Column(
         modifier = Modifier
@@ -182,7 +190,7 @@ fun PluginIntroductionItem(
             .clickable {
                 click.invoke()
             }
-            .background(randomColor())
+            .background(Color(215, 215, 237))
             .padding(10.dp)
     ){
         Row(
@@ -191,8 +199,8 @@ fun PluginIntroductionItem(
                 .fillMaxWidth()
                 .height(50.dp)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.img),
+            AsyncImage(
+                model = "${test_server}/${plugin.iconPath}",
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxHeight(1f)
@@ -201,7 +209,7 @@ fun PluginIntroductionItem(
                 contentScale = ContentScale.FillBounds
             )
             Text(
-                text = "空教室",
+                text = plugin.apkName?:"无应用名",
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 20.dp)
@@ -241,7 +249,7 @@ fun PluginIntroductionItem(
                 contentScale = ContentScale.FillBounds
             )
             Text(
-                text = "开发者：theonenull",
+                text = "开发者：${plugin.developer}",
                 modifier = Modifier
                     .weight(1f)
                     .align(Alignment.CenterVertically),
@@ -254,7 +262,7 @@ fun PluginIntroductionItem(
         }
 
         Text(
-            text = "插件介绍插件介绍插件介绍插件介绍插件介插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍插件介绍",
+            text = plugin.description ?: "该插件无介绍",
             maxLines = 4,
             overflow = TextOverflow.Ellipsis
         )

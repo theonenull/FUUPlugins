@@ -3,4 +3,5 @@
     <string name="title_activity_compose_plugin">ComposePluginActivity</string>
     <string name="title_activity_markdown_plugin">MarkdownActivity</string>
     <string name="title_activity_setting">SettingActivity</string>
+    <string name="title_activity_network_plugin">NetworkPluginActivity</string>
 </resources>

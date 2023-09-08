@@ -24,6 +24,7 @@ import com.example.fuuplugins.activity.BaseActivity
 import com.example.fuuplugins.activity.composePluginActivity.ComposePluginActivity
 import com.example.fuuplugins.activity.mainActivity.ui.MainActivityUi
 import com.example.fuuplugins.activity.markDownActivity.MarkdownActivity
+import com.example.fuuplugins.activity.networkPluginActivity.NetworkPluginActivity
 import com.example.fuuplugins.ui.theme.FUUPluginsTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
@@ -43,7 +44,7 @@ class MainActivity : BaseActivity() {
                 }
                 MainActivityUi(
                     activityToMarkdownActivity = {
-                        val intent = Intent(this,MarkdownActivity::class.java)
+                        val intent = Intent(this,NetworkPluginActivity::class.java)
                         intent.putExtra("markdown","## Hey, this is us \uD83D\uDC4B\n" +
                         "\n" +
                                 "![Image](https://www.w2fzu.com/usr/uploads/logos/logo-round.png)"+
