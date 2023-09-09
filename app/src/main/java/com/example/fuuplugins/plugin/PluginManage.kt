@@ -8,6 +8,8 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader
+import java.io.InputStream
+import java.io.InputStreamReader
 import java.lang.reflect.Array.newInstance
 import java.lang.reflect.Field
 
@@ -115,6 +117,24 @@ class PluginManager private constructor() {
             return jsonToObject(builder.toString(), PluginConfig::class.java)
         }
 
+        inline fun <reified T>loadJson(inputStream: InputStream): T {
+            val inputStreamReader = InputStreamReader(inputStream)
+            val br = BufferedReader(inputStreamReader)
+            var line: String?
+            val builder = StringBuilder()
+            while (br.readLine().also { line = it } != null) {
+                builder.append(line + "\n")
+            }
+            br.close()
+            inputStreamReader.close()
+            return jsonToObject(builder.toString(), T::class.java)
+        }
+
+//        inline fun <reified T> jsonToObject(json: String, clazz: Class<T>): T {
+//            val gson = Gson()
+//            return gson.fromJson(json, clazz)
+//        }
+
         fun <T> jsonToObject(json: String?, type: Class<T>?): T {
             val gson = Gson()
             return gson.fromJson(json, type)
@@ -129,6 +149,19 @@ class PluginManager private constructor() {
             val builder = StringBuilder()
             while (br.readLine().also { line = it } != null) {
                 builder.append(line+"\n")
+            }
+            br.close()
+            inputStreamReader.close()
+            return builder.toString().trimIndent()
+        }
+
+        fun loadMarkDown(inputStream: InputStream): String {
+            val inputStreamReader = InputStreamReader(inputStream)
+            val br = BufferedReader(inputStreamReader)
+            var line: String?
+            val builder = StringBuilder()
+            while (br.readLine().also { line = it } != null) {
+                builder.append(line + "\n")
             }
             br.close()
             inputStreamReader.close()

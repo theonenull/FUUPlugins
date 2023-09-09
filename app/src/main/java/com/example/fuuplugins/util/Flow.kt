@@ -9,8 +9,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlin.experimental.ExperimentalTypeInference
 
 
 fun <T> Flow<T>.flowIO() : Flow<T>{
@@ -27,6 +31,23 @@ fun <T>Flow<T>.catchWithMassage(block:FlowCollector<T>.(Throwable)->Unit) : Flow
     return this.catch {
         Log.e("flow throwable",it.toString())
         block.invoke(this,it)
+    }
+}
+
+
+suspend fun <T>Flow<T>.normalNetworkCollectWithError(
+    error:FlowCollector<T>.(Throwable)->Unit,
+    loadingAction:(FlowCollector<T>)->Unit = {},
+    success : (T)->Unit = {},
+
+){
+    this
+        .onStart {
+            loadingAction.invoke(this)
+        }
+        .catchWithMassage(error)
+    .collect{
+        success.invoke(it)
     }
 }
 
