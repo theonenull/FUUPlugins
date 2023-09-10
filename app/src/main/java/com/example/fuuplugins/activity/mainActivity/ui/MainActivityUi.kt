@@ -23,7 +23,8 @@ import kotlinx.coroutines.withContext
 @Composable
 fun MainActivityUi(
     mainActivityViewModel: MainActivityViewModel = viewModel(),
-    activityToMarkdownActivity: ()->Unit = {}
+    activityToMarkdownActivity: ()->Unit = {},
+    activityToNetworkActivity: ()->Unit = {}
 ){
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "startPage") {
@@ -36,7 +37,7 @@ fun MainActivityUi(
                     }.first()
                     withContext(Dispatchers.Main){
                         navController.navigate(
-                            if(isLogin) "mainFramework" else "login"
+                            if(isLogin || true) "mainFramework" else "login"
                         ) {
                             popUpTo("startPage") { inclusive = true }
                         }

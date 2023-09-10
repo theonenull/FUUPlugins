@@ -93,6 +93,9 @@ class ClassScheduleViewModel:ViewModel() {
     fun refreshInitData(){
         viewModelScope.launch(Dispatchers.IO) {
             CourseRepository.getWeek()
+                .catchWithMassage {
+
+                }
                 .collectLatest {
                     setYearWeek(
                         year = it.curYear.toString(), week = it.nowWeek.toString(), xuenian = it.curXuenian.toString()
@@ -127,6 +130,9 @@ class ClassScheduleViewModel:ViewModel() {
                     getWeek()
                 ){ stateHTML, weekDataOnFlow ->
                     CourseData(stateHTML = stateHTML, weekData = weekDataOnFlow)
+                }
+                .catchWithMassage {
+
                 }
                 .collectLatest { courseData ->
                     val weekData = courseData.weekData
@@ -193,6 +199,9 @@ class ClassScheduleViewModel:ViewModel() {
                                     }
                                 )
                             }
+                            .catchWithMassage {
+
+                            }
                             .collectLatest { initCourseBean ->
                                 FuuApplication.db.courseDao().clearByXq(xq.substring(0,4),xq.substring(5,6))
                                 setUserDataStore(UserPreferencesKey.USER_DATA_VALIDITY_PERIOD,
@@ -212,12 +221,12 @@ class ClassScheduleViewModel:ViewModel() {
             val xq = getDataManageDataStore(DataManagePreferencesKey.DATA_MANAGE_CURRENT_ACADEMIC_YEAR,"").first()
             ExamRepository.apply {
                 getExamStateHTML()
-                    .catchWithMassage {
-
-                    }
                     .map {
                         Log.d("html",it)
                         return@map(parseExamsHTML(it))
+                    }
+                    .catchWithMassage {
+
                     }
                     .collectLatest {
                         Log.d("exam",it.toString())

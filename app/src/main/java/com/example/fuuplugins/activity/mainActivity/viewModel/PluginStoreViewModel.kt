@@ -4,14 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fuuplugins.activity.mainActivity.network.bean.PluginJsonFromNetwork
 import com.example.fuuplugins.activity.mainActivity.network.bean.PluginOnServer
-import com.example.fuuplugins.activity.mainActivity.network.bean.PluginListFromNetwork
 import com.example.fuuplugins.activity.mainActivity.repositories.PluginRepository
 import com.example.fuuplugins.util.NetworkResult
 import com.example.fuuplugins.util.catchWithMassage
 import com.example.fuuplugins.util.easyToast
 import com.example.fuuplugins.util.normalNetworkCollectWithError
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -48,7 +46,7 @@ class PluginStoreViewModel:ViewModel(){
                     },
                     success = {
                         md.value = NetworkResult.SUCCESS(it)
-                    }
+                    },
                 )
         }
     }
@@ -62,11 +60,10 @@ class PluginStoreViewModel:ViewModel(){
                     },
                     loadingAction = {
                         plugin.value = NetworkResult.LOADING("正在加载")
-                    },
-                    success = {
-                        plugin.value = NetworkResult.SUCCESS(it)
                     }
-                )
+                ) {
+                    plugin.value = NetworkResult.SUCCESS(it)
+                }
         }
     }
 }

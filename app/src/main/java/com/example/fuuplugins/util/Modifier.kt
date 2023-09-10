@@ -1,5 +1,6 @@
 package com.example.fuuplugins.util
 
+import android.provider.ContactsContract.Data
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,5 +40,29 @@ fun Modifier.drawLabel(
 
     if(size.height<contentHeight){
         return@drawBehind
+    }
+}
+
+@Composable
+fun <T>ShowUiWithNetworkResult(
+    data:NetworkResult<T>,
+    unloadUi:@Composable ()->Unit = {},
+    errorUi:@Composable (error:Throwable)->Unit= {},
+    loadingUi:@Composable ()->Unit= {},
+    successUi:@Composable (data:T)->Unit = {},
+) {
+    when(data){
+        is NetworkResult.UNLOAD -> {
+            unloadUi()
+        }
+        is NetworkResult.ERROR<T> -> {
+            errorUi(data.error)
+        }
+        is NetworkResult.LOADING->{
+            loadingUi()
+        }
+        is NetworkResult.SUCCESS<T>->{
+            successUi(data.data)
+        }
     }
 }

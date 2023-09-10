@@ -7,6 +7,7 @@ import com.example.fuuplugins.activity.mainActivity.network.PluginService
 import com.example.fuuplugins.activity.mainActivity.network.bean.PluginJsonFromNetwork
 import com.example.fuuplugins.activity.mainActivity.network.bean.PluginListFromNetwork
 import com.example.fuuplugins.activity.mainActivity.network.bean.PluginOnServer
+import com.example.fuuplugins.activity.mainActivity.network.bean.carousel.CarouselPicture
 import com.example.fuuplugins.network.OkHttpUtil
 import com.example.fuuplugins.plugin.PluginConfig
 import com.example.fuuplugins.plugin.PluginManager.Companion.loadJson
@@ -34,6 +35,7 @@ object PluginRepository : BaseRepository(){
             .sslSocketFactory(OkHttpUtil.getSSLSocketFactory, OkHttpUtil.trustAllCerts[0])
             .connectTimeout(5, TimeUnit.SECONDS)
             .readTimeout(10, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
             .build()
     }
     private fun getPluginApi(): PluginService {
@@ -68,16 +70,21 @@ object PluginRepository : BaseRepository(){
             val data = getPluginApi().getPluginMd(id).execute().body() ?:throw Throwable("数据为空")
             val inputStream = data.byteStream()
             emit(loadMarkDown(inputStream))
-            // 文件下载完成，可以在这里执行相应的操作
         }.flowOn(Dispatchers.IO)
     }
     fun getPluginJson(id:String): Flow<PluginJsonFromNetwork> {
         return flow {
             val data = getPluginApi().getPluginJson(id).execute().body() ?:throw Throwable("数据为空")
             emit(data)
-            // 文件下载完成，可以在这里执行相应的操作
+        }.flowOn(Dispatchers.IO)
+    }
+
+    fun getCarouselPictureList(): Flow<CarouselPicture> {
+        return flow {
+            val data = getPluginApi().getCarouselPictureList().execute().body() ?:throw Throwable("数据为空")
+            emit(data)
         }.flowOn(Dispatchers.IO)
     }
 }
 
-val test_server ="http://10.0.2.2:8181"
+val test_server ="http://10.133.6.139:8181/"

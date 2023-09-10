@@ -2,7 +2,8 @@ package com.example.fuuplugins.activity.mainActivity.ui
 
 import android.content.Intent
 import android.net.Uri
-import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -23,7 +24,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -34,35 +34,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.sharp.Refresh
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -72,48 +60,36 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
-import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.fuuplugins.FuuApplication
 import com.example.fuuplugins.R
 import com.example.fuuplugins.activity.composePluginActivity.ComposePluginActivity
+import com.example.fuuplugins.activity.mainActivity.network.bean.carousel.CarouselPicture
+import com.example.fuuplugins.activity.mainActivity.repositories.test_server
+import com.example.fuuplugins.activity.mainActivity.viewModel.PluginAlreadyDownloadedViewModel
+import com.example.fuuplugins.activity.networkPluginActivity.NetworkPluginActivity
 import com.example.fuuplugins.plugin.Plugin
 import com.example.fuuplugins.plugin.PluginState
-import com.example.fuuplugins.util.easyToast
+import com.example.fuuplugins.util.NetworkResult
+import com.example.fuuplugins.util.ShowUiWithNetworkResult
 import com.example.fuuplugins.util.normalToast
 import dev.jeziellago.compose.markdowntext.MarkdownText
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Timer
 import java.util.TimerTask
 
-@Composable
-fun PluginPage(){
-    NavHost(navController = rememberNavController(),"tool"){
-        composable("store"){
-            BackHandler {
 
-            }
-        }
-        composable("tool"){
-            BackHandler {
 
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
-fun PluginTool(){
+fun PluginTool(
+    viewModel : PluginAlreadyDownloadedViewModel = viewModel()
+){
     val showPlugin = remember {
         mutableStateOf<Plugin?>(null)
     }
@@ -123,7 +99,11 @@ fun PluginTool(){
         PluginAlreadyDownloaded(
             pluginLongClick = {
                 showPlugin.value = it
-            }
+            },
+            refreshCarousel = {
+                viewModel.refreshCarouselData()
+            },
+            carouselState = viewModel.carouselData.collectAsStateWithLifecycle(),
         )
         showPlugin.value?.let {
             PluginDialog(
@@ -136,12 +116,15 @@ fun PluginTool(){
     }
 }
 
-@Preview(device = "spec:width=400dp,height=200dp")
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun Carousel(
-    modifier : Modifier = Modifier
+    modifier: Modifier = Modifier,
+    refreshCarousel:()->Unit = {},
+    state: State<NetworkResult<CarouselPicture>>
 ) {
+    val content = LocalContext.current
     val virtualCount = Int.MAX_VALUE
     val actualCount = 10
     //初始图片下标
@@ -149,61 +132,88 @@ private fun Carousel(
     val pageState = rememberPagerState(initialPage = initialIndex)
     //改变地方在这里
     val coroutineScope= rememberCoroutineScope()
-    DisposableEffect(pageState.currentPage) {
+    DisposableEffect(pageState.currentPage,state) {
         val timer = Timer()
-        timer.schedule(object : TimerTask(){
-            override fun run() {
-                coroutineScope.launch {
-                    pageState.animateScrollToPage(pageState.currentPage+1)
-                }
+        if(state.value is NetworkResult.SUCCESS ){
+            if( (state.value as NetworkResult.SUCCESS<CarouselPicture>).data.data.size>1){
+                timer.schedule(object : TimerTask(){
+                    override fun run() {
+                        coroutineScope.launch {
+                            pageState.animateScrollToPage(pageState.currentPage+1)
+                        }
+                    }
+                },4000,3000)
             }
-        },4000,3000)
+        }
         onDispose {
             timer.cancel()
         }
     }
-    Box(modifier = modifier){
-        HorizontalPager(
-            pageCount = virtualCount,
-            state = pageState,
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(
-                    RoundedCornerShape(8.dp)
-                )
-        ) { index ->
-            Box(modifier = Modifier
-                .fillMaxSize()
-                .background(randomColor()))
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 5.dp),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            (0..9).forEach { radioIndex ->
-                Spacer(
+    ShowUiWithNetworkResult(
+        state.value,
+        successUi = {
+            Box(modifier = modifier){
+                HorizontalPager(
+                    pageCount = virtualCount,
+                    state = pageState,
                     modifier = Modifier
-                        .padding(horizontal = 5.dp)
-                        .size(10.dp)
-                        .clip(RoundedCornerShape(100))
-                        .background(
-                            if (radioIndex == pageState.currentPage % 10) Color.Blue else Color.White
+                        .fillMaxSize()
+                        .clip(
+                            RoundedCornerShape(8.dp)
                         )
-                )
+                ) { index ->
+                    val context = LocalContext.current
+                    AsyncImage(
+                        model = "${test_server}/carousel/${it.data[index%it.data.size].icon_name}/icon",
+                        contentDescription = null,
+                        modifier = Modifier
+                            .clickable {
+                                if(it.data[index%it.data.size].carousel.web!=""){
+                                    val intent = Intent(context, NetworkPluginActivity::class.java)
+                                    intent.putExtra("url",it.data[index%it.data.size].carousel.web)
+                                    content.startActivity(intent)
+                                }
+                            },
+                        contentScale = ContentScale.FillBounds
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 5.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    (0 until it.data.size).forEach { radioIndex ->
+                        Spacer(
+                            modifier = Modifier
+                                .padding(horizontal = 5.dp)
+                                .size(10.dp)
+                                .clip(RoundedCornerShape(100))
+                                .background(
+                                    if (radioIndex == pageState.currentPage % it.data.size) Color.Blue else Color.White
+                                )
+                        )
+                    }
+                }
             }
-        }
-    }
+        },
+        errorUi = {
+            Text(text = "加载失败")
+        },
+        unloadUi = { Text(text = "未加载") }, loadingUi = { Text("加载中") },
+
+    )
+
 }
 
 
 @OptIn(ExperimentalFoundationApi::class)
-@Preview
 @Composable
 fun PluginAlreadyDownloaded(
-    pluginLongClick:(Plugin)->Unit = {}
+    pluginLongClick:(Plugin)->Unit = {},
+    refreshCarousel:()->Unit = {},
+    carouselState: State<NetworkResult<CarouselPicture>>
 ){
     Box(
         modifier = Modifier.fillMaxSize()
@@ -218,7 +228,9 @@ fun PluginAlreadyDownloaded(
             Carousel(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
+                    .height(200.dp),
+                refreshCarousel = refreshCarousel,
+                state = carouselState,
             )
             LazyVerticalGrid(
                 columns = GridCells.Fixed(5),
@@ -243,7 +255,8 @@ fun PluginAlreadyDownloaded(
                             .combinedClickable(
                                 onClick = {
                                     if (list.value[it].state == PluginState.SUCCESS) {
-                                        val intent = Intent(content, ComposePluginActivity::class.java)
+                                        val intent =
+                                            Intent(content, ComposePluginActivity::class.java)
                                         intent.putExtra("index", it.toString())
                                         content.startActivity(intent)
                                     } else {
@@ -476,3 +489,4 @@ fun PluginMarkdown(
     }
 
 }
+

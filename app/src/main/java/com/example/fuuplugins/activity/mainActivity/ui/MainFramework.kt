@@ -59,7 +59,6 @@ fun MainFramework(
             }
         }
         val iconItems = listOf(Icons.Default.Favorite, Icons.Default.Face, Icons.Default.Email)
-        val iconSelectedItem = remember { mutableStateOf(iconItems[0]) }
         ModalNavigationDrawer(
             drawerState = drawerState,
             gesturesEnabled = gesturesEnabled,

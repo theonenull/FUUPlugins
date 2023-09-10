@@ -21,12 +21,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
+import com.example.fuuplugins.activity.BaseActivity
 import com.example.fuuplugins.ui.theme.FUUPluginsTheme
 
-class NetworkPluginActivity : ComponentActivity() {
+class NetworkPluginActivity : BaseActivity() {
     val webViewChromeClient = object: com.tencent.smtt.sdk.WebChromeClient(){
 
     }
+
     val webViewClient = object: com.tencent.smtt.sdk.WebViewClient(){
         override fun onReceivedSslError(
             p0: com.tencent.smtt.sdk.WebView?,
@@ -39,6 +41,7 @@ class NetworkPluginActivity : ComponentActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val myUrl = intent.getStringExtra("url") ?: "www.baidu.com"
         setContent {
             FUUPluginsTheme {
                 // A surface container using the 'background' color from the theme
@@ -75,7 +78,7 @@ class NetworkPluginActivity : ComponentActivity() {
                                     setWebViewClient(webViewClient)
                                     setLayerType(View.LAYER_TYPE_HARDWARE, null)
                                 }
-                                loadUrl("http://welcome.fzuhelper.w2fzu.com/#/")
+                                loadUrl(myUrl)
                             }
 
                     })
