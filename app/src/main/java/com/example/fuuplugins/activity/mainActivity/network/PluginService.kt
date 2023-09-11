@@ -1,10 +1,8 @@
 package com.example.fuuplugins.activity.mainActivity.network
 
-import androidx.glance.GlanceId
-import com.example.fuuplugins.activity.mainActivity.network.bean.PluginJsonFromNetwork
-import com.example.fuuplugins.activity.mainActivity.network.bean.PluginListFromNetwork
-import com.example.fuuplugins.activity.mainActivity.network.bean.carousel.Carousel
+import com.example.fuuplugins.activity.mainActivity.network.bean.pluginListBean.PluginListBean
 import com.example.fuuplugins.activity.mainActivity.network.bean.carousel.CarouselPicture
+import com.example.fuuplugins.activity.mainActivity.network.bean.pluginItemBean.PluginItemBean
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.http.GET
@@ -14,7 +12,7 @@ import retrofit2.http.Streaming
 
 interface PluginService {
     @GET("plugin/list")
-    fun getPluginList(): Call<PluginListFromNetwork>
+    fun getPluginList(): Call<PluginListBean>
 
     @GET("plugin/{id}/md")
     @Streaming
@@ -22,7 +20,7 @@ interface PluginService {
 
     @GET("plugin/{id}/showJson")
     @Streaming
-    fun getPluginJson(@Path("id") id: String) : Call<PluginJsonFromNetwork>
+    fun getPluginJson(@Path("id") id: String) : Call<PluginItemBean>
 
     @GET("carousel/list")
     fun getCarouselPictureList() : Call<CarouselPicture>

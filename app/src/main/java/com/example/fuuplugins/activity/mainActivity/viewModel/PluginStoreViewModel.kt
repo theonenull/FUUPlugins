@@ -2,8 +2,7 @@ package com.example.fuuplugins.activity.mainActivity.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.fuuplugins.activity.mainActivity.network.bean.PluginJsonFromNetwork
-import com.example.fuuplugins.activity.mainActivity.network.bean.PluginOnServer
+import com.example.fuuplugins.activity.mainActivity.network.bean.pluginItemBean.PluginItemBean
 import com.example.fuuplugins.activity.mainActivity.repositories.PluginRepository
 import com.example.fuuplugins.util.NetworkResult
 import com.example.fuuplugins.util.catchWithMassage
@@ -14,7 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class PluginPageViewModel:ViewModel() {
-    val pluginListFromNetwork = MutableStateFlow<List<PluginOnServer>?>(null)
+    val pluginListFromNetwork = MutableStateFlow<List<PluginItemBean>?>(null)
     init {
         viewModelScope.launch(Dispatchers.IO) {
             PluginRepository.getPluginList()
@@ -32,7 +31,7 @@ class PluginPageViewModel:ViewModel() {
 }
 class PluginStoreViewModel:ViewModel(){
     val md = MutableStateFlow<NetworkResult<String>>(NetworkResult.UNLOAD())
-    val plugin = MutableStateFlow<NetworkResult<PluginJsonFromNetwork>>(NetworkResult.UNLOAD())
+    val plugin = MutableStateFlow<NetworkResult<PluginItemBean>>(NetworkResult.UNLOAD())
 
     fun getDataById(id:String){
         viewModelScope.launch(Dispatchers.IO) {

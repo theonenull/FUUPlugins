@@ -21,7 +21,7 @@ object BlockTestStartPageRepository : StartPageRepository {
             emit(
                 DataType(
                     1,
-                    "https://picx.zhimg.com/80/v2-73ad2b662bd48498edd1b2499b29c88d_720w.webp?source=1940ef5c"
+                    "${test_server}/start/page"
                 )
             )
         }.catch {

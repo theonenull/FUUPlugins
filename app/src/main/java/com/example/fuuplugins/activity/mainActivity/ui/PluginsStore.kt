@@ -21,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,8 +47,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.fuuplugins.R
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.example.fuuplugins.activity.mainActivity.network.bean.PluginJsonFromNetwork
-import com.example.fuuplugins.activity.mainActivity.network.bean.PluginOnServer
+import com.example.fuuplugins.activity.mainActivity.network.bean.pluginItemBean.PluginItemBean
+import com.example.fuuplugins.activity.mainActivity.network.bean.pluginListBean.PluginListBean
 import com.example.fuuplugins.activity.mainActivity.repositories.test_server
 import com.example.fuuplugins.activity.mainActivity.viewModel.PluginPageViewModel
 import com.example.fuuplugins.activity.mainActivity.viewModel.PluginStoreViewModel
@@ -73,12 +74,16 @@ fun PluginsStore (
                     navHostController.navigate("detail/${id}")
                 }
             }
-            composable("detail/{id}"){backStackEntry->
+            composable("detail/{id}"){ backStackEntry->
                 val viewModel: PluginStoreViewModel = viewModel()
                 PluginDetail(
                     backStackEntry.arguments?.getString("id"),
                     viewModel = viewModel
-                )
+                ) {
+                    navHostController.navigate("list") {
+                        popUpTo("list")
+                    }
+                }
             }
         }
     }
@@ -88,7 +93,8 @@ fun PluginsStore (
 //@Preview
 fun PluginDetail(
     id: String?,
-    viewModel: PluginStoreViewModel
+    viewModel: PluginStoreViewModel,
+    navigationToList: () -> Unit
 ) {
     val md = viewModel.md.collectAsStateWithLifecycle()
     val plugin = viewModel.plugin.collectAsStateWithLifecycle()
@@ -116,7 +122,6 @@ fun PluginDetail(
             .clip(RoundedCornerShape(10.dp))
             .padding(10.dp)
     ){
-
         when(plugin.value){
             is NetworkResult.UNLOAD->{
 
@@ -128,7 +133,7 @@ fun PluginDetail(
                     CircularProgressIndicator()
                 }
             }
-            is NetworkResult.SUCCESS<PluginJsonFromNetwork> ->{
+            is NetworkResult.SUCCESS<PluginItemBean> ->{
                 Row(
                     modifier = Modifier
                         .padding(bottom = 20.dp)
@@ -145,7 +150,7 @@ fun PluginDetail(
                         contentScale = ContentScale.FillBounds
                     )
                     Text(
-                        text = (plugin.value as NetworkResult.SUCCESS<PluginJsonFromNetwork>).data.data.apkName ?: "应用名加载失败",
+                        text = (plugin.value as NetworkResult.SUCCESS<PluginItemBean>).data.pluginConfig.pluginName ?: "应用名加载失败",
                         modifier = Modifier
                             .weight(1f)
                             .padding(horizontal = 20.dp)
@@ -164,6 +169,9 @@ fun PluginDetail(
                             .aspectRatio(1f)
                             .clip(RoundedCornerShape(100))
                             .background(Color.Gray)
+                            .clickable {
+                                navigationToList.invoke()
+                            }
                             .padding(5.dp)
                             .align(Alignment.CenterVertically),
                         contentScale = ContentScale.FillBounds
@@ -176,7 +184,7 @@ fun PluginDetail(
                         .wrapContentHeight()
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                        painter = painterResource(id = R.drawable.img_1),
                         contentDescription = null,
                         modifier = Modifier
                             .height(30.dp)
@@ -185,7 +193,7 @@ fun PluginDetail(
                         contentScale = ContentScale.FillBounds
                     )
                     Text(
-                        text = (("开发者：" + (plugin.value as NetworkResult.SUCCESS<PluginJsonFromNetwork>).data.data.developer)
+                        text = (("开发者：" + (plugin.value as NetworkResult.SUCCESS<PluginItemBean>).data.pluginConfig.developer)
                             ?: "开发者名加载失败"),
                         modifier = Modifier
                             .weight(1f)
@@ -196,6 +204,17 @@ fun PluginDetail(
                         fontSize = 13.sp,
                         overflow = TextOverflow.Ellipsis
                     )
+                }
+
+                Row(
+                    modifier = Modifier
+                        .padding(bottom = 20.dp)
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                ) {
+                    Button(onClick = {  }) {
+                        Text(text = "安装")
+                    }
                 }
             }
             is NetworkResult.ERROR->{
@@ -234,13 +253,12 @@ fun PluginDetail(
                 }
             }
         }
-
     }
 }
 
 @Composable
 fun PluginIntroductionList(
-    pluginListFromNetwork: State<List<PluginOnServer>?>,
+    pluginListFromNetwork: State<List<PluginItemBean>?>,
     click: (String) -> Unit = {},
 ){
     pluginListFromNetwork.value?.let { pluginList ->
@@ -261,7 +279,7 @@ fun PluginIntroductionList(
 
 @Composable
 fun PluginIntroductionItem(
-    plugin: PluginOnServer,
+    plugin: PluginItemBean,
     click: (String) -> Unit = {}
 ){
     Column(
@@ -271,7 +289,7 @@ fun PluginIntroductionItem(
             .wrapContentHeight()
             .clip(RoundedCornerShape(20.dp))
             .clickable {
-                click.invoke(plugin.id)
+                plugin.pluginConfig.id?.let { click.invoke(it) }
             }
             .background(Color(215, 215, 237))
             .padding(10.dp)
@@ -283,7 +301,7 @@ fun PluginIntroductionItem(
                 .height(50.dp)
         ) {
             AsyncImage(
-                model = "${test_server}/plugin/${plugin.id}/icon",
+                model = "${test_server}/plugin/${plugin.pluginConfig.id}/icon",
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxHeight(1f)
@@ -292,7 +310,7 @@ fun PluginIntroductionItem(
                 contentScale = ContentScale.FillBounds
             )
             Text(
-                text = plugin.apkName?:"无应用名",
+                text = plugin.pluginConfig.pluginName?:"无应用名",
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 20.dp)
@@ -323,7 +341,7 @@ fun PluginIntroductionItem(
                 .wrapContentHeight()
         ) {
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                painter = painterResource(id = R.drawable.img_1),
                 contentDescription = null,
                 modifier = Modifier
                     .height(30.dp)
@@ -332,7 +350,7 @@ fun PluginIntroductionItem(
                 contentScale = ContentScale.FillBounds
             )
             Text(
-                text = "开发者：${plugin.developer}",
+                text = "开发者：${plugin.pluginConfig.developer}",
                 modifier = Modifier
                     .weight(1f)
                     .align(Alignment.CenterVertically),
@@ -345,7 +363,7 @@ fun PluginIntroductionItem(
         }
 
         Text(
-            text = plugin.description ?: "该插件无介绍",
+            text = plugin.pluginConfig.description ?: "该插件无介绍",
             maxLines = 4,
             overflow = TextOverflow.Ellipsis
         )

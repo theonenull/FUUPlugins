@@ -43,7 +43,7 @@ class ComposePluginActivity : ComponentActivity() {
             normalToast("插件加载失败")
             this.onDestroy()
         }
-        val plugin = FuuApplication.plugins.value.get(index = index.toInt())
+        val plugin = FuuApplication.apkPlugins.value.get(index = index.toInt())
         setContent {
             FUUPluginsTheme {
                 // A surface container using the 'background' color from the theme

@@ -117,6 +117,21 @@ class PluginManager private constructor() {
             return jsonToObject(builder.toString(), PluginConfig::class.java)
         }
 
+        inline fun <reified T>loadJson(file: File): T {
+            val inputStreamReader = FileReader(
+                file
+            ) // 使用IO流读取json文件内容
+            val br = BufferedReader(inputStreamReader)
+            var line: String?
+            val builder = StringBuilder()
+            while (br.readLine().also { line = it } != null) {
+                builder.append(line)
+            }
+            br.close()
+            inputStreamReader.close()
+            return jsonToObject(builder.toString(), T::class.java)
+        }
+
         inline fun <reified T>loadJson(inputStream: InputStream): T {
             val inputStreamReader = InputStreamReader(inputStream)
             val br = BufferedReader(inputStreamReader)
@@ -170,10 +185,32 @@ class PluginManager private constructor() {
     }
 }
 
-data class PluginConfig(
-    val version : String? = null,
-    val minFuuVersion : String? = null,
-    val maxFuuVersion : String? = null,
-    val apkName : String? = null ,
-    val developer : String? = null
-)
+interface PluginConfig {
+    val version: String?
+    val minFuuVersion: String?
+    val maxFuuVersion: String?
+    val pluginName: String?
+    val developer: String?
+    val description: String?
+    val id : String?
+    data class WebPluginConfig(
+        override val version: String? = null,
+        override val minFuuVersion: String? = null,
+        override val maxFuuVersion: String? = null,
+        override val pluginName: String? = null,
+        override val developer: String? = null,
+        var url : String = "",
+        override val id: String? = null,
+        override val description: String? = null
+    ) : PluginConfig
+
+    data class ApkPluginConfig(
+        override val id: String?,
+        override val version: String? = null,
+        override val minFuuVersion: String? = null,
+        override val maxFuuVersion: String? = null,
+        override val pluginName: String? = null,
+        override val developer: String? = null,
+        override val description: String? = null
+    ) : PluginConfig
+}

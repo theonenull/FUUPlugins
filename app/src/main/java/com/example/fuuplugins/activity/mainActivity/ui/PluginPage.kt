@@ -2,8 +2,6 @@ package com.example.fuuplugins.activity.mainActivity.ui
 
 import android.content.Intent
 import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -224,7 +222,8 @@ fun PluginAlreadyDownloaded(
                 .padding(horizontal = 10.dp, vertical = 10.dp),
         ){
             val content = LocalContext.current
-            val list = FuuApplication.plugins.collectAsState()
+            val apkPluginList = FuuApplication.apkPlugins.collectAsState()
+            val webPluginList = FuuApplication.webPlugins.collectAsState()
             Carousel(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -239,14 +238,14 @@ fun PluginAlreadyDownloaded(
                     .fillMaxWidth()
                     .weight(1f)
             ){
-                items(list.value.size){
+                items(apkPluginList.value.size){
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .wrapContentHeight()
                             .padding(10.dp)
                             .background(
-                                if (list.value[it].state == PluginState.SUCCESS) {
+                                if (apkPluginList.value[it].state == PluginState.SUCCESS) {
                                     Color.Transparent
                                 } else {
                                     Color.Red
@@ -254,7 +253,7 @@ fun PluginAlreadyDownloaded(
                             )
                             .combinedClickable(
                                 onClick = {
-                                    if (list.value[it].state == PluginState.SUCCESS) {
+                                    if (apkPluginList.value[it].state == PluginState.SUCCESS) {
                                         val intent =
                                             Intent(content, ComposePluginActivity::class.java)
                                         intent.putExtra("index", it.toString())
@@ -264,16 +263,16 @@ fun PluginAlreadyDownloaded(
                                     }
                                 },
                                 onLongClick = {
-                                    pluginLongClick.invoke(list.value[it])
+                                    pluginLongClick.invoke(apkPluginList.value[it])
                                 }
                             )
                     ){
-                        if(list.value[it].iconPath != null){
+                        if(apkPluginList.value[it].iconPath != null){
                             Image(
                                 painter = rememberAsyncImagePainter(
                                     ImageRequest
                                         .Builder(LocalContext.current)
-                                        .data(data = Uri.fromFile(File(list.value[it].iconPath!!)))
+                                        .data(data = Uri.fromFile(File(apkPluginList.value[it].iconPath!!)))
                                         .build()
                                 ),
                                 contentDescription = null,
@@ -295,7 +294,75 @@ fun PluginAlreadyDownloaded(
                             )
                         }
                         Text(
-                            text = list.value[it].pluginConfig.apkName?:"加载失败",
+                            text = apkPluginList.value[it].pluginConfig.pluginName?:"加载失败",
+                            softWrap = false,
+                            maxLines = 1,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 5.dp),
+                            textAlign = TextAlign.Center,
+                            fontSize = 10.sp,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+                items(webPluginList.value.size){
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .padding(10.dp)
+                            .background(
+                                if (webPluginList.value[it].state == PluginState.SUCCESS) {
+                                    Color.Transparent
+                                } else {
+                                    Color.Red
+                                }
+                            )
+                            .combinedClickable(
+                                onClick = {
+                                    if (webPluginList.value[it].state == PluginState.SUCCESS) {
+                                        val intent =
+                                            Intent(content, NetworkPluginActivity::class.java)
+                                        intent.putExtra("url", webPluginList.value[it].url)
+                                        content.startActivity(intent)
+                                    } else {
+                                        normalToast("插件加载失败")
+                                    }
+                                },
+                                onLongClick = {
+                                    pluginLongClick.invoke(webPluginList.value[it])
+                                }
+                            )
+                    ){
+                        if(webPluginList.value[it].iconPath != null){
+                            Image(
+                                painter = rememberAsyncImagePainter(
+                                    ImageRequest
+                                        .Builder(LocalContext.current)
+                                        .data(data = Uri.fromFile(File(webPluginList.value[it].iconPath!!)))
+                                        .build()
+                                ),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .padding(10.dp),
+                                contentScale = ContentScale.FillBounds
+                            )
+                        }else{
+                            Image(
+                                imageVector = Icons.Filled.Close ,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .padding(10.dp),
+                                contentScale = ContentScale.FillBounds
+                            )
+                        }
+                        Text(
+                            text = webPluginList.value[it].pluginConfig.pluginName?:"加载失败",
                             softWrap = false,
                             maxLines = 1,
                             modifier = Modifier
@@ -331,7 +398,7 @@ fun PluginAlreadyDownloaded(
 
 @Composable
 fun PluginDialog(
-    plugin:Plugin,
+    plugin: Plugin,
     onDismissRequest : () -> Unit
 ){
     Dialog(onDismissRequest = onDismissRequest) {
@@ -365,7 +432,7 @@ fun PluginDialog(
                     contentScale = ContentScale.FillBounds
                 )
                 Text(
-                    text = plugin.pluginConfig.apkName ?: "加载失败",
+                    text = plugin.pluginConfig.pluginName ?: "加载失败",
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = 20.dp)

@@ -4,10 +4,10 @@ import android.util.Log
 import com.example.fuuplugins.Base.BaseRepository
 import com.example.fuuplugins.activity.mainActivity.data.CookieUtil
 import com.example.fuuplugins.activity.mainActivity.network.PluginService
-import com.example.fuuplugins.activity.mainActivity.network.bean.PluginJsonFromNetwork
-import com.example.fuuplugins.activity.mainActivity.network.bean.PluginListFromNetwork
-import com.example.fuuplugins.activity.mainActivity.network.bean.PluginOnServer
+
 import com.example.fuuplugins.activity.mainActivity.network.bean.carousel.CarouselPicture
+import com.example.fuuplugins.activity.mainActivity.network.bean.pluginItemBean.PluginItemBean
+import com.example.fuuplugins.activity.mainActivity.network.bean.pluginListBean.PluginListBean
 import com.example.fuuplugins.network.OkHttpUtil
 import com.example.fuuplugins.plugin.PluginConfig
 import com.example.fuuplugins.plugin.PluginManager.Companion.loadJson
@@ -58,7 +58,7 @@ object PluginRepository : BaseRepository(){
         }
         return otherServiceInstance!!
     }
-    fun getPluginList(): Flow<PluginListFromNetwork> {
+    fun getPluginList(): Flow<PluginListBean> {
         return flow {
             val data = getPluginApi().getPluginList().execute().body() ?: throw Throwable("数据为空")
             emit(data)
@@ -72,7 +72,7 @@ object PluginRepository : BaseRepository(){
             emit(loadMarkDown(inputStream))
         }.flowOn(Dispatchers.IO)
     }
-    fun getPluginJson(id:String): Flow<PluginJsonFromNetwork> {
+    fun getPluginJson(id:String): Flow<PluginItemBean> {
         return flow {
             val data = getPluginApi().getPluginJson(id).execute().body() ?:throw Throwable("数据为空")
             emit(data)
@@ -87,4 +87,4 @@ object PluginRepository : BaseRepository(){
     }
 }
 
-val test_server ="http://10.133.6.139:8181/"
+val test_server ="http://10.133.13.103:8181/"
