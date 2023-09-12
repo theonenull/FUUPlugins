@@ -24,4 +24,8 @@ interface PluginService {
 
     @GET("carousel/list")
     fun getCarouselPictureList() : Call<CarouselPicture>
+
+    @GET("plugin/{id}/file")
+    @Streaming
+    fun downloadPlugin(@Path("id") id: String) : Call<ResponseBody>
 }

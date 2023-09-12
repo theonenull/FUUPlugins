@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace = "com.example.fuuplugins"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.fuuplugins"
@@ -61,6 +61,7 @@ android {
 dependencies {
 implementation(platform(libs.compose.bom))
     implementation(platform(libs.compose.bom))
+    implementation(libs.androidx.work.runtime.ktx)
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(platform(libs.compose.bom))
     //    implementation(libs.androidx.material3.android)
@@ -118,7 +119,7 @@ implementation(platform(libs.compose.bom))
 
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.31.0-alpha")
 
-    implementation ("androidx.glance:glance:1.0.0-alpha05")
+    implementation ("androidx.glance:glance:1.0.0")
     implementation("androidx.glance:glance-appwidget:1.0.0-alpha05")
 
 //    // For AppWidgets support

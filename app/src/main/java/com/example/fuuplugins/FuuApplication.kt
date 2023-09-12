@@ -1,8 +1,12 @@
 package com.example.fuuplugins
 
 import android.app.Application
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.compose.runtime.Composer
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.room.Room
 import com.example.fuuplugins.activity.mainActivity.data.dao.FuuDatabase
 import com.example.fuuplugins.config.dataStore.UserPreferencesKey
@@ -14,6 +18,7 @@ import com.example.fuuplugins.plugin.PluginManager.Companion.loadJson
 import com.example.fuuplugins.plugin.PluginManager.Companion.loadMarkDown
 import com.example.fuuplugins.plugin.PluginState
 import com.example.fuuplugins.util.normalToast
+import com.example.fuuplugins.weight.ExamWeight
 import com.example.inject.repository.Repository
 import com.tencent.smtt.sdk.QbSdk
 import com.tencent.smtt.sdk.QbSdk.PreInitCallback
@@ -35,6 +40,7 @@ import java.lang.reflect.Method
 class FuuApplication: Application() {
     companion object{
         private val pluginsScope = CoroutineScope(Job())
+        private val glancesScope = CoroutineScope(Job())
         lateinit var instance : Application
         lateinit var db : FuuDatabase
         lateinit var pluginsPathForApk : String
@@ -51,7 +57,6 @@ class FuuApplication: Application() {
             )
         val apkPlugins = MutableStateFlow<List<Plugin.ApkPlugin>>(listOf())
         val webPlugins = MutableStateFlow<List<Plugin.WebPlugin>>(listOf())
-
         fun reloadPlugins(){
             pluginsScope.launch {
                 apkPlugins.emit(listOf())
@@ -86,7 +91,12 @@ class FuuApplication: Application() {
                 Log.i("onViewInitFinished","$b -----------")
             }
         })
-
+        glancesScope.launch(Dispatchers.Default) {
+            db.examDao().getAll().collect{
+                val intent = Intent( instance, MyBroadcastReceiver::class.java)
+                instance.sendBroadcast(intent)
+            }
+        }
     }
 
     override fun onTerminate() {
@@ -257,6 +267,36 @@ private fun CoroutineScope.loadWebPlugin(){
             if(webPlugins.size == files.size){
                 FuuApplication.isApkPluginsLoading.value = true
                 FuuApplication.webPlugins.update { webPlugins }
+            }
+        }
+    }
+}
+
+class MyBroadcastReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context?, intent: Intent?) {
+        println("onReceive")
+        val scope = CoroutineScope(Job())
+        if (intent?.action == "android.intent.action.BOOT_COMPLETED") {
+            scope.launch {
+                context?.let {
+                    val manager = GlanceAppWidgetManager(context)
+                    val widget = ExamWeight()
+                    val glanceIds = manager.getGlanceIds(widget.javaClass)
+                    glanceIds.forEach { glanceId ->
+                        widget.update(context, glanceId)
+                    }
+                }
+            }
+        } else {
+            scope.launch {
+                context?.let {
+                    val manager = GlanceAppWidgetManager(context)
+                    val widget = ExamWeight()
+                    val glanceIds = manager.getGlanceIds(widget.javaClass)
+                    glanceIds.forEach { glanceId ->
+                        widget.update(context, glanceId)
+                    }
+                }
             }
         }
     }

@@ -22,6 +22,11 @@
         android:theme="@style/Theme.FUUPlugins"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        <service
+            android:name=".service.PluginDownloadService"
+            android:enabled="false"
+            android:exported="true" />
+
         <activity
             android:name=".activity.networkPluginActivity.NetworkPluginActivity"
             android:exported="false"
@@ -65,6 +70,17 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/course_weight_info" />
+        </receiver>
+        <receiver
+            android:name=".MyBroadcastReceiver"
+            android:enabled="true"
+            android:exported="false"> <!-- 设置 android:exported="false" 以限制广播接收器只在您的应用程序内部可用 -->
+
+            <!-- 定义意图过滤器，指定广播接收器要处理的操作（action） -->
+            <intent-filter>
+                <action android:name="com.example.myapp.ACTION_MY_BROADCAST" />
+                <!-- 添加其他操作（action），如果需要 -->
+            </intent-filter>
         </receiver>
     </application>
 

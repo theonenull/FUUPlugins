@@ -21,6 +21,8 @@ import okhttp3.CookieJar
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okhttp3.ResponseBody
+import retrofit2.Response
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
@@ -82,6 +84,13 @@ object PluginRepository : BaseRepository(){
     fun getCarouselPictureList(): Flow<CarouselPicture> {
         return flow {
             val data = getPluginApi().getCarouselPictureList().execute().body() ?:throw Throwable("数据为空")
+            emit(data)
+        }.flowOn(Dispatchers.IO)
+    }
+
+    fun downloadPlugin(id:String): Flow<Response<ResponseBody>> {
+        return flow {
+            val data = getPluginApi().downloadPlugin(id).execute() ?:throw Throwable("数据为空")
             emit(data)
         }.flowOn(Dispatchers.IO)
     }

@@ -37,7 +37,7 @@ fun MainActivityUi(
                     }.first()
                     withContext(Dispatchers.Main){
                         navController.navigate(
-                            if(isLogin || true) "mainFramework" else "login"
+                            if(isLogin ) "mainFramework" else "login"
                         ) {
                             popUpTo("startPage") { inclusive = true }
                         }

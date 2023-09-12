@@ -212,7 +212,9 @@ fun PluginDetail(
                         .fillMaxWidth()
                         .wrapContentHeight()
                 ) {
-                    Button(onClick = {  }) {
+                    Button(onClick = {
+
+                    }) {
                         Text(text = "安装")
                     }
                 }

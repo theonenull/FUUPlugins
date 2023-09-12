@@ -212,7 +212,7 @@ fun ClassSchedule(
                                     .weight(1f)
                                     .requiredHeight((11 * 75).dp)
                             ) {
-                                viewModel.courseForShow.collectAsStateWithLifecycle().value?.let { courseBeans ->
+                                viewModel.courseForShow.collectAsStateWithLifecycle().value.let { courseBeans ->
                                     courseBeans
                                         .filter {
                                             it.kcStartWeek <= page+1 && it.kcEndWeek >= page+1 && (it.kcIsDouble == ((page+1)%2 == 0) || it.kcIsSingle == ((page+1)%2 == 1))
@@ -227,9 +227,7 @@ fun ClassSchedule(
                                                     EmptyClassCard(
                                                         item.kcStartTime - 1
                                                     )
-                                                }
-                                                else
-                                                {
+                                                } else {
                                                     EmptyClassCard(
                                                         it[index].kcStartTime - it[index - 1].kcEndTime - 1
                                                     )
@@ -241,8 +239,7 @@ fun ClassSchedule(
                                                             viewModel.courseDialog.value = it
                                                         }
                                                     )
-                                                }
-                                                else if(it[index].kcStartTime > it[index - 1].kcEndTime){
+                                                } else if(it[index].kcStartTime > it[index - 1].kcEndTime){
                                                     ClassCard(
                                                         item,
                                                         detailAboutCourse = {

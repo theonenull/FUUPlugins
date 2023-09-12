@@ -65,4 +65,10 @@ class PluginStoreViewModel:ViewModel(){
                 }
         }
     }
+
+    fun downLoadPlugin(id: String){
+        viewModelScope.launch(Dispatchers.IO) {
+
+        }
+    }
 }
