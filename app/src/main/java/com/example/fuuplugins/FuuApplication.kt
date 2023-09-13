@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composer
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.room.Room
 import com.example.fuuplugins.activity.mainActivity.data.dao.FuuDatabase
+import com.example.fuuplugins.activity.mainActivity.network.PluginService
 import com.example.fuuplugins.config.dataStore.UserPreferencesKey
 import com.example.fuuplugins.config.dataStore.setUserDataStore
 import com.example.fuuplugins.plugin.Plugin
@@ -17,6 +18,7 @@ import com.example.fuuplugins.plugin.PluginManager
 import com.example.fuuplugins.plugin.PluginManager.Companion.loadJson
 import com.example.fuuplugins.plugin.PluginManager.Companion.loadMarkDown
 import com.example.fuuplugins.plugin.PluginState
+import com.example.fuuplugins.service.PluginDownloadService
 import com.example.fuuplugins.util.normalToast
 import com.example.fuuplugins.weight.ExamWeight
 import com.example.inject.repository.Repository
@@ -75,20 +77,21 @@ class FuuApplication: Application() {
             FuuDatabase::class.java,
             "fuu"
         ).build()
-
+        this.let {
+            Log.d("start","_______________")
+            val intent = Intent(applicationContext, PluginDownloadService::class.java)
+            startService(intent)
+            Log.d("end","_______________")
+        }
         pluginsPathForApk = "${applicationContext.dataDir}/plugins_apk"
         pluginsPathForWeb = "${applicationContext.dataDir}/plugins_web"
         pluginDirMake()
         pluginsScope.pluginInit()
         QbSdk.initX5Environment(this, object : PreInitCallback {
             override fun onCoreInitFinished() {
-                // X5内核加载完成后回调
-                Log.i("onCoreInitFinished"," -----------")
             }
 
             override fun onViewInitFinished(b: Boolean) {
-                // 传入参数b为true表示加载X5成功，false表示加载失败
-                Log.i("onViewInitFinished","$b -----------")
             }
         })
         glancesScope.launch(Dispatchers.Default) {
@@ -108,6 +111,8 @@ class FuuApplication: Application() {
                 UserPreferencesKey.USER_DATA_VALIDITY_PERIOD,
                 "")
         }
+        val intent = Intent(applicationContext,PluginDownloadService::class.java)
+        this.applicationContext.stopService(intent)
     }
 
     private fun pluginDirMake(){

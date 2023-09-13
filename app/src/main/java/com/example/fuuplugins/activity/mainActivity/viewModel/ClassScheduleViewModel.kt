@@ -30,6 +30,7 @@ import com.example.fuuplugins.config.dataStore.setUserDataStore
 import com.example.fuuplugins.config.dataStore.setYearWeek
 import com.example.fuuplugins.config.dataStore.userDataStore
 import com.example.fuuplugins.util.catchWithMassage
+import com.example.fuuplugins.util.collectWithError
 import com.example.fuuplugins.util.easyToast
 import com.example.fuuplugins.util.flowIO
 import com.example.material.ButtonState
@@ -58,6 +59,7 @@ import kotlinx.datetime.toLocalDateTime
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalUnit
+import java.util.Calendar
 
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -92,11 +94,12 @@ class ClassScheduleViewModel:ViewModel() {
 
     fun refreshInitData(){
         viewModelScope.launch(Dispatchers.IO) {
+            currentYear.value = getDataManageDataStore(DataManagePreferencesKey.DATA_MANAGE_CURRENT_ACADEMIC_YEAR, Calendar.getInstance().get(Calendar.YEAR).toString()).first()
             CourseRepository.getWeek()
                 .catchWithMassage {
 
                 }
-                .collectLatest {
+                .collectWithError {
                     setYearWeek(
                         year = it.curYear.toString(), week = it.nowWeek.toString(), xuenian = it.curXuenian.toString()
                     )
@@ -109,7 +112,7 @@ class ClassScheduleViewModel:ViewModel() {
                         }.catchWithMassage{
 
                         }
-                        .collectLatest {
+                        .collectWithError {
 
                         }
                 }
@@ -134,7 +137,7 @@ class ClassScheduleViewModel:ViewModel() {
                 .catchWithMassage {
 
                 }
-                .collectLatest { courseData ->
+                .collectWithError { courseData ->
                     val weekData = courseData.weekData
                     setDataManageDataStore(DataManagePreferencesKey.DATA_MANAGE_CURRENT_WEEK,weekData.nowWeek.toString())
                     getCourses("${weekData.curYear}0${weekData.curXuenian}",courseData.stateHTML)
@@ -156,7 +159,7 @@ class ClassScheduleViewModel:ViewModel() {
                         .catchWithMassage {
 
                         }
-                        .collectLatest { initCourseBean ->
+                        .collectWithError { initCourseBean ->
                             FuuApplication.db.courseDao().clearAll()
                             FuuApplication.db.courseDao().insertCourses(initCourseBean)
                             courseData.weekData.let{
@@ -202,7 +205,7 @@ class ClassScheduleViewModel:ViewModel() {
                             .catchWithMassage {
 
                             }
-                            .collectLatest { initCourseBean ->
+                            .collectWithError { initCourseBean ->
                                 FuuApplication.db.courseDao().clearByXq(xq.substring(0,4),xq.substring(5,6))
                                 setUserDataStore(UserPreferencesKey.USER_DATA_VALIDITY_PERIOD,
                                     LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
@@ -228,7 +231,7 @@ class ClassScheduleViewModel:ViewModel() {
                     .catchWithMassage {
 
                     }
-                    .collectLatest {
+                    .collectWithError {
                         Log.d("exam",it.toString())
                         FuuApplication.db.examDao().clearAll()
                         FuuApplication.db.examDao().insertList(it)
@@ -246,7 +249,7 @@ class ClassScheduleViewModel:ViewModel() {
                 refreshDialog.value = true
                 BlockLoginPageRepository.getVerifyCode().catch {
                     refreshVerificationCodeState.value = WhetherVerificationCode.FAIL
-                }.collectLatest {
+                }.collectWithError {
                     val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
                     refreshDialogVerificationCode.value = bitmap.asImageBitmap()
                     refreshVerificationCodeState.value = WhetherVerificationCode.SUCCESS
@@ -315,7 +318,7 @@ class ClassScheduleViewModel:ViewModel() {
                         refreshButtonState.value = ButtonState.Normal
                     }
                 }
-                .collect{ loginResult ->
+                .collectWithError{ loginResult ->
                     when(loginResult){
                         LoginResult.LoginError->{
                             refreshButtonState.value = ButtonState.Normal
@@ -345,7 +348,7 @@ class ClassScheduleViewModel:ViewModel() {
                     parseBeginDate(newValue,result)
                 }
                 .catchWithMassage {  }
-                .collectLatest {
+                .collectWithError {
 
                 }
         }
@@ -360,7 +363,7 @@ class ClassScheduleViewModel:ViewModel() {
         val weekData: WeekData
     )
 
-    suspend fun checkCookieEffectiveness():Boolean{
+    private suspend fun checkCookieEffectiveness():Boolean{
         val currentTime = (FuuApplication.instance.userDataStore.data.map {
             it[UserPreferencesKey.USER_DATA_VALIDITY_PERIOD]
         }.first() ?: "")

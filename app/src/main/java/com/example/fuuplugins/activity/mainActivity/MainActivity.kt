@@ -1,37 +1,41 @@
 package com.example.fuuplugins.activity.mainActivity
 
+import android.content.BroadcastReceiver
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import android.os.IBinder
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.content.res.ResourcesCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
+import com.example.fuuplugins.FuuApplication
 import com.example.fuuplugins.activity.BaseActivity
-import com.example.fuuplugins.activity.composePluginActivity.ComposePluginActivity
 import com.example.fuuplugins.activity.mainActivity.ui.MainActivityUi
-import com.example.fuuplugins.activity.markDownActivity.MarkdownActivity
 import com.example.fuuplugins.activity.networkPluginActivity.NetworkPluginActivity
+import com.example.fuuplugins.service.PluginDownloadService
 import com.example.fuuplugins.ui.theme.FUUPluginsTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
+
 class MainActivity : BaseActivity() {
+    var mBinder:PluginDownloadService.DownloadBinder?=null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Intent(this , PluginDownloadService::class.java).also { intent ->
+            this.bindService(intent, object : ServiceConnection {
+                override fun onServiceConnected(className: ComponentName, binder: IBinder) {
+                    mBinder = binder as PluginDownloadService.DownloadBinder
+                    Toast.makeText(FuuApplication.instance,"true", Toast.LENGTH_SHORT).show()
+                }
+                override fun onServiceDisconnected(arg0: ComponentName) {
+                    Toast.makeText(FuuApplication.instance,"false", Toast.LENGTH_SHORT).show()
+                }
+            }, Context.BIND_AUTO_CREATE)
+        }
         setContent {
             FUUPluginsTheme {
                 val systemUiController = rememberSystemUiController()
@@ -43,7 +47,6 @@ class MainActivity : BaseActivity() {
                         isNavigationBarContrastEnforced = false,
                     )
                 }
-
                 MainActivityUi(
                     activityToMarkdownActivity = {
                         val intent = Intent(this,NetworkPluginActivity::class.java)
@@ -117,10 +120,28 @@ class MainActivity : BaseActivity() {
                                 "\n".trimIndent())
                         startActivity(intent)
                     },
+                    downloadPlugin = { id,startCallBack,endCallBack,errorCallBack->
+                        mBinder?.service.let { service ->
+                            service?.startDownload(
+                                id = id,
+                                startCallBack = startCallBack,
+                                endCallBack = endCallBack,
+                                errorCallBack = errorCallBack
+                            )
+                        }
+                    }
                 )
             }
         }
     }
+
+
+    class MsgReceiver(private val action:()->Unit) : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent) {
+            action.invoke()
+        }
+    }
+
 }
 
 // 全屏隐藏系统栏，如：你看视频或者玩游戏的时候，就可以通过此种方式，体验是一样的

@@ -4,11 +4,13 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:name=".FuuApplication"
@@ -22,9 +24,10 @@
         android:theme="@style/Theme.FUUPlugins"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+
         <service
             android:name=".service.PluginDownloadService"
-            android:enabled="false"
+            android:enabled="true"
             android:exported="true" />
 
         <activity
@@ -75,6 +78,7 @@
             android:name=".MyBroadcastReceiver"
             android:enabled="true"
             android:exported="false"> <!-- 设置 android:exported="false" 以限制广播接收器只在您的应用程序内部可用 -->
+
 
             <!-- 定义意图过滤器，指定广播接收器要处理的操作（action） -->
             <intent-filter>

@@ -1,5 +1,11 @@
 package com.example.fuuplugins.activity.mainActivity.ui
 
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
+import android.os.IBinder
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,11 +36,14 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -47,18 +57,23 @@ import androidx.navigation.compose.rememberNavController
 import com.example.fuuplugins.R
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.fuuplugins.FuuApplication
+import com.example.fuuplugins.activity.mainActivity.network.PluginService
 import com.example.fuuplugins.activity.mainActivity.network.bean.pluginItemBean.PluginItemBean
 import com.example.fuuplugins.activity.mainActivity.network.bean.pluginListBean.PluginListBean
 import com.example.fuuplugins.activity.mainActivity.repositories.test_server
 import com.example.fuuplugins.activity.mainActivity.viewModel.PluginPageViewModel
 import com.example.fuuplugins.activity.mainActivity.viewModel.PluginStoreViewModel
+import com.example.fuuplugins.service.PluginDownloadService
 import com.example.fuuplugins.util.NetworkResult
+import com.example.material.ButtonState
+import com.example.material.LoadableButton
 import kotlinx.coroutines.launch
 
 @Composable
 @Preview
 fun PluginsStore (
-
+    downloadPlugin:(String,()->Unit,()->Unit,(Throwable)->Unit) -> Unit = { _, _,_, _ -> }
 ){
     Box(modifier = Modifier.statusBarsPadding()){
 
@@ -78,12 +93,14 @@ fun PluginsStore (
                 val viewModel: PluginStoreViewModel = viewModel()
                 PluginDetail(
                     backStackEntry.arguments?.getString("id"),
-                    viewModel = viewModel
-                ) {
-                    navHostController.navigate("list") {
-                        popUpTo("list")
+                    viewModel = viewModel,
+                    downloadPlugin = downloadPlugin,
+                    navigationToList = {
+                        navHostController.navigate("list") {
+                            popUpTo("list")
+                        }
                     }
-                }
+                )
             }
         }
     }
@@ -94,7 +111,8 @@ fun PluginsStore (
 fun PluginDetail(
     id: String?,
     viewModel: PluginStoreViewModel,
-    navigationToList: () -> Unit
+    navigationToList: () -> Unit,
+    downloadPlugin:(String,()->Unit,()->Unit,(Throwable)->Unit) -> Unit = { _, _,_, _ -> }
 ) {
     val md = viewModel.md.collectAsStateWithLifecycle()
     val plugin = viewModel.plugin.collectAsStateWithLifecycle()
@@ -205,6 +223,7 @@ fun PluginDetail(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
+                val content = LocalContext.current
 
                 Row(
                     modifier = Modifier
@@ -212,11 +231,37 @@ fun PluginDetail(
                         .fillMaxWidth()
                         .wrapContentHeight()
                 ) {
-                    Button(onClick = {
-
-                    }) {
-                        Text(text = "安装")
+                    val state = remember {
+                        mutableStateOf(ButtonState.Normal)
                     }
+                    LoadableButton(
+                        onClick = {
+                            downloadPlugin.invoke(
+                                id,
+                                {
+                                    state.value = ButtonState.Loading
+                                },
+                                {
+                                    state.value = ButtonState.Normal
+                                },
+                                {
+                                    state.value = ButtonState.Normal
+                                }
+                            )
+                        },
+                        normalContent = {
+                            Text(text = "安装")
+                        },
+                        loadingContent = {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(10.dp)
+                            )
+                        },
+                        buttonState = state.value,
+                        colors = ButtonDefaults.buttonColors( containerColor = Color(214, 214, 236))
+                    )
                 }
             }
             is NetworkResult.ERROR->{
@@ -291,7 +336,7 @@ fun PluginIntroductionItem(
             .wrapContentHeight()
             .clip(RoundedCornerShape(20.dp))
             .clickable {
-                plugin.pluginConfig.id?.let { click.invoke(it) }
+                plugin.pluginConfig.id.let { click.invoke(it) }
             }
             .background(Color(215, 215, 237))
             .padding(10.dp)

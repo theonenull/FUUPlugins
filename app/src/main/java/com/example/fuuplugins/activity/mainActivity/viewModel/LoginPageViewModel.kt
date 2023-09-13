@@ -26,6 +26,7 @@ import com.example.fuuplugins.config.dataStore.getUserDataStore
 import com.example.fuuplugins.config.dataStore.setUserDataStore
 import com.example.fuuplugins.config.dataStore.userDataStore
 import com.example.fuuplugins.util.catchWithMassage
+import com.example.fuuplugins.util.collectWithError
 import com.example.fuuplugins.util.easyToast
 import com.example.fuuplugins.util.flowIO
 import kotlinx.coroutines.Dispatchers
@@ -60,7 +61,7 @@ class LoginPageViewModel: ViewModel() {
             BlockLoginPageRepository.getVerifyCode()
                 .catch {
                     verificationCodeState.value = WhetherVerificationCode.FAIL
-                }.collectLatest {
+                }.collectWithError {
                 val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
                 verificationCode.value = bitmap.asImageBitmap()
                 verificationCodeState.value = WhetherVerificationCode.SUCCESS
@@ -150,7 +151,7 @@ class LoginPageViewModel: ViewModel() {
                         getVerificationCodeFromNetwork()
                     }
                 }
-                .collect{ loginResult ->
+                .collectWithError{ loginResult ->
                     when(loginResult){
                         LoginResult.LoginError->{
                             easyToast("登录失败,请重新登录")

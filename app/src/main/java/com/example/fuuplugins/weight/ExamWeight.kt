@@ -110,7 +110,7 @@ class WorkWorker(
            // 排队进行工作
            fun enqueue(context: Context, size: MutableStateFlow<List<ExamBean>>, glanceId: GlanceId, force: Boolean = true) {
                  val manager = WorkManager.getInstance(context)
-                 val requestBuilder = PeriodicWorkRequestBuilder<WorkWorker>(1,TimeUnit.MINUTES)
+                 val requestBuilder = PeriodicWorkRequestBuilder<WorkWorker>(30,TimeUnit.MINUTES)
                      .addTag(glanceId.toString())
 
                  val workPolicy = if (force) {

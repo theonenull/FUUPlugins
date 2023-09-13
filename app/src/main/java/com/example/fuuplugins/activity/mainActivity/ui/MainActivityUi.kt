@@ -23,8 +23,9 @@ import kotlinx.coroutines.withContext
 @Composable
 fun MainActivityUi(
     mainActivityViewModel: MainActivityViewModel = viewModel(),
-    activityToMarkdownActivity: ()->Unit = {},
-    activityToNetworkActivity: ()->Unit = {}
+    activityToMarkdownActivity: () -> Unit = {},
+    activityToNetworkActivity: () -> Unit = {},
+    downloadPlugin:(String,()->Unit,()->Unit,(Throwable)->Unit) -> Unit = { _, _,_, _ -> }
 ){
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "startPage") {
@@ -68,17 +69,13 @@ fun MainActivityUi(
                         }
                     }
                 },
-                activityToMarkdownActivity = activityToMarkdownActivity
+                activityToMarkdownActivity = activityToMarkdownActivity,
+                downloadPlugin = downloadPlugin,
             )
         }
     }
 }
 
-@Composable
-@Preview
-fun MainActivityUiPreview(){
-    MainActivityUi()
-}
 
 
 

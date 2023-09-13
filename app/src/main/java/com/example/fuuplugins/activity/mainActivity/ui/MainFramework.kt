@@ -45,7 +45,8 @@ import kotlinx.coroutines.launch
 fun MainFramework(
     viewModel: MainFrameworkViewModel = viewModel(),
     navigationToLogin: () -> Unit = {},
-    activityToMarkdownActivity: () -> Unit = {}
+    activityToMarkdownActivity: () -> Unit = {},
+    downloadPlugin:(String,()->Unit,()->Unit,(Throwable)->Unit) -> Unit = { _, _,_, _ -> }
 ){
     Column(
         modifier = Modifier
@@ -118,7 +119,9 @@ fun MainFramework(
                                     PluginTool()
                                 }
                                 2 -> {
-                                    PluginsStore()
+                                    PluginsStore(
+                                        downloadPlugin = downloadPlugin,
+                                    )
                                 }
                             }
                         }

@@ -6,6 +6,7 @@ import com.example.fuuplugins.activity.mainActivity.network.bean.pluginItemBean.
 import com.example.fuuplugins.activity.mainActivity.repositories.PluginRepository
 import com.example.fuuplugins.util.NetworkResult
 import com.example.fuuplugins.util.catchWithMassage
+import com.example.fuuplugins.util.collectWithError
 import com.example.fuuplugins.util.easyToast
 import com.example.fuuplugins.util.normalNetworkCollectWithError
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +21,7 @@ class PluginPageViewModel:ViewModel() {
                 .catchWithMassage {
                     easyToast("连接错误")
                 }
-                .collect{
+                .collectWithError{
                     it.let {
                         pluginListFromNetwork.value = it.pluginList
                     }

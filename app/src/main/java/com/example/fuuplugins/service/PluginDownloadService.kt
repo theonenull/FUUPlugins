@@ -1,112 +1,135 @@
 package com.example.fuuplugins.service
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.app.job.JobInfo
+import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
+import android.content.pm.PackageManager
 import android.os.Binder
-import android.os.Build
 import android.os.IBinder
+import android.util.Log
+import android.widget.Toast
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import com.example.fuuplugins.FuuApplication
 import com.example.fuuplugins.R
 import com.example.fuuplugins.activity.mainActivity.repositories.PluginRepository.downloadPlugin
-import com.example.fuuplugins.util.catchWithMassage
+import com.example.fuuplugins.util.info
+import com.tencent.smtt.sdk.stat.MttLoader.CHANNEL_ID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flatMapConcat
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.ResponseBody
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 
-class PluginDownloadService : Service() {
+class PluginDownloadService : Service(){
     val scope = CoroutineScope(Job())
-    private val binder = LocalBinder()
-    override fun onBind(intent: Intent): IBinder {
-        return binder
+
+    override fun onBind(intent: Intent?): IBinder {
+        return DownloadBinder(this)
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        scope.launch(Dispatchers.IO) {
-            if(intent == null){
-                return@launch
-            }
-            val id = intent.getStringExtra("id") ?: return@launch
-            File(FuuApplication.pluginsPathForWeb,"plugin_${id}").let {
-                if(it.exists()){
-                    it.delete()
-                }
-            }
-            File(FuuApplication.pluginsPathForApk,"plugin_${id}").let {
-                if(it.exists()){
-                    it.delete()
-                }
-            }
-            val isApk = (id.toInt()%2) == 0
-            val file = File(if(isApk) FuuApplication.pluginsPathForApk else FuuApplication.pluginsPathForWeb,"plugin_0")
-            flow {
-                emit(file.mkdirs())
-            }.flatMapConcat {
-                if(it){
-                    downloadPlugin(id)
-                }
-                else{
-                    throw Throwable("创建失败")
-                }
-            }
-                .catchWithMassage {
-
-                }
-                .collect{
-                    if(!it.isSuccessful){
-                        return@collect
-                    }
-                    val data = it.body() ?: return@collect
-
-                    val totalLength = data.contentLength().toDouble()
-                    //写文件
-                    file.outputStream().run {
-                        val input = data.byteStream()
-                        input.copyTo(this){ currentLength ->
-                            //当前下载进度
-                            val process = currentLength / totalLength * 100
-
-                        }
-                    }
-                }
+    fun startDownload(
+        id:String,
+        startCallBack:suspend ()->Unit = {},
+        endCallBack:suspend ()->Unit = {},
+        errorCallBack : suspend (Throwable)->Unit = {},
+    ){
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID).apply {
+            setContentTitle("插件 Download")
+            setContentText("Download in progress")
+            setSmallIcon(R.drawable.fuu)
+            priority = NotificationCompat.PRIORITY_HIGH
+            setAutoCancel(true)
         }
-        return super.onStartCommand(intent, flags, startId)
+        val notificationId = 0
+
+        val name = "download"
+        val descriptionText = "null"
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
+            description = descriptionText
+        }
+        // Register the channel with the system
+        val notificationManager: NotificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+        NotificationManagerCompat.from(FuuApplication.instance).apply {
+            // Issue the initial notification with zero progress
+            builder.setProgress(100, 0, false)
+            if (ActivityCompat.checkSelfPermission(
+                    FuuApplication.instance,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return@apply
+            }
+            notificationManager.notify(notificationId, builder.build())
+        }
+        if (id.isNotEmpty()) {
+            scope.launch(Dispatchers.IO){
+                startCallBack()
+                downloadPlugin(id)
+                    .collect { responseBodyResponse ->
+                        try {
+                            if (!responseBodyResponse.isSuccessful) {
+                                return@collect
+                            }
+                            val data = responseBodyResponse.body() ?: return@collect
+                            val isApk = responseBodyResponse.headers()["type"] == "apk"
+                            val file =
+                                File(if (isApk) FuuApplication.pluginsPathForApk else FuuApplication.pluginsPathForWeb,"plugin_${id}.zip")
+                            saveToFile(data, file = file) {
+                                if(it >= 95){
+                                    builder.setContentText("下载完成")
+                                        .setProgress(0, 0, false)
+
+                                    endCallBack()
+                                }else{
+                                    builder.setContentText("下载完成")
+                                        .setProgress(100, it, false)
+                                }
+                                notificationManager.notify(notificationId, builder.build())
+                            }
+                        } catch (e: Exception) {
+                            Log.e("download",e.toString())
+                            errorCallBack(e)
+                            notificationManager.cancel(notificationId)
+                            withContext(Dispatchers.Main){
+                                Toast.makeText(FuuApplication.instance,"下載失敗",Toast.LENGTH_SHORT).show()
+
+                            }
+                        }
+                        this@PluginDownloadService.stopSelf()
+                    }
+            }
+        }
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        Log.d("ssssssssss","_______________")
     }
 
     override fun onDestroy() {
         super.onDestroy()
         scope.cancel()
-    }
-    inner class LocalBinder : Binder() {
-        // Return this instance of LocalService so clients can call public methods
-        fun getService(): PluginDownloadService = this@PluginDownloadService
+        Log.d("destorp","_______________")
     }
 
-//    private fun createNotificationForProgress() {
-//        val progressMax = 100
-//        val progressCurrent = 30
-//        val mBuilder = NotificationCompat.Builder(this@PluginDownloadService, mProgressChannelId)
-//            .setContentTitle("进度通知")
-//            .setContentText("下载中：$progressCurrent%")
-////            .setSmallIcon(R.mipmap.ic_launcher)
-////            .setLargeIcon(BitmapFactory.decodeResource(resources, R.mipmap.ic_avatar))
-//            // 第3个参数indeterminate，false表示确定的进度，比如100，true表示不确定的进度，会一直显示进度动画，直到更新状态下载完成，或删除通知
-//            .setProgress(progressMax, progressCurrent, false)
-//
-//        mManager.notify(mProgressNotificationId, mBuilder.build())
-//    }
+    class DownloadBinder(val service: PluginDownloadService) : Binder() {
+
+    }
+
 }
 
 inline fun InputStream.copyTo(out: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE, progress: (Long)-> Unit): Long {
@@ -120,6 +143,30 @@ inline fun InputStream.copyTo(out: OutputStream, bufferSize: Int = DEFAULT_BUFFE
         progress(bytesCopied)
     }
     return bytesCopied
+}
+
+
+
+
+private inline fun saveToFile(responseBody: ResponseBody, file: File, progressListener: (Int) -> Unit) {
+    val total = responseBody.contentLength()
+    var bytesCopied = 0
+    var emittedProgress = 0
+    file.outputStream().use { output ->
+        val input = responseBody.byteStream()
+        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+        var bytes = input.read(buffer)
+        while (bytes > 0) {
+            output.write(buffer, 0, bytes)
+            bytesCopied += bytes
+            bytes = input.read(buffer)
+            val progress = (bytesCopied * 100.0 / total).toInt()
+            if (progress - emittedProgress >= 0) {
+                progressListener(progress)
+                emittedProgress = progress
+            }
+        }
+    }
 }
 
 

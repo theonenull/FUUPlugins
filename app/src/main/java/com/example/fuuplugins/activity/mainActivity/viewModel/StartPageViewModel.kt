@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.fuuplugins.activity.mainActivity.repositories.BlockTestStartPageRepository
 import com.example.fuuplugins.activity.mainActivity.repositories.DataType
 import com.example.fuuplugins.activity.mainActivity.ui.StartPageShowType
+import com.example.fuuplugins.util.collectWithError
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -38,7 +39,7 @@ class StartPageViewModel(
             BlockTestStartPageRepository.getStartPageData(
                 failAction
             )
-                .collectLatest {
+                .collectWithError {
                     if(it.startPageType == 1){
                         upgradeImageUrl(it.context)
                     }
