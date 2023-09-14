@@ -12,6 +12,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -109,9 +110,12 @@ fun ImagesOnly(
     Box (
         modifier = Modifier
             .fillMaxSize()
+            .clickable {
+                jumpOver.invoke()
+            }
     ){
         val color = remember {
-            mutableStateOf(Color(216, 216, 237, 100))
+            mutableStateOf(Color.Transparent)
         }
         AsyncImage(
             model = ImageRequest.Builder(
@@ -127,18 +131,18 @@ fun ImagesOnly(
             modifier = Modifier
                 .matchParentSize()
         )
-
-        FloatingActionButton(
-            onClick = { jumpOver.invoke() },
-            modifier = Modifier
-                .systemBarsPadding()
-                .offset(x = (-10).dp, y = (-10).dp)
-                .align(Alignment.BottomEnd),
-            containerColor = color.value,
-            contentColor = color.value
-        ) {
-            Image(imageVector = Icons.Filled.KeyboardArrowRight, contentDescription = null)
-        }
+//
+//        FloatingActionButton(
+//            onClick = { jumpOver.invoke() },
+//            modifier = Modifier
+//                .systemBarsPadding()
+//                .offset(x = (-10).dp, y = (-10).dp)
+//                .align(Alignment.BottomEnd),
+//            containerColor = color.value,
+//            contentColor = color.value
+//        ) {
+//            Image(imageVector = Icons.Filled.KeyboardArrowRight, contentDescription = null)
+//        }
     }
 }
 

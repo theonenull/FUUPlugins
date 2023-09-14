@@ -154,4 +154,4 @@ fun MainFrameworkPreview(){
     MainFramework()
 }
 
-val ListOfPages = listOf("课表", "工具箱", "表白墙")
+val ListOfPages = listOf("课表", "工具箱", "插件中心")
