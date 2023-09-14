@@ -20,6 +20,7 @@ import com.example.fuuplugins.plugin.PluginManager.Companion.loadMarkDown
 import com.example.fuuplugins.plugin.PluginState
 import com.example.fuuplugins.service.PluginDownloadService
 import com.example.fuuplugins.util.normalToast
+import com.example.fuuplugins.util.toastInSuspend
 import com.example.fuuplugins.weight.ExamWeight
 import com.example.inject.repository.Repository
 import com.tencent.smtt.sdk.QbSdk
@@ -27,6 +28,7 @@ import com.tencent.smtt.sdk.QbSdk.PreInitCallback
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
@@ -59,11 +61,28 @@ class FuuApplication: Application() {
             )
         val apkPlugins = MutableStateFlow<List<Plugin.ApkPlugin>>(listOf())
         val webPlugins = MutableStateFlow<List<Plugin.WebPlugin>>(listOf())
-        fun reloadPlugins(){
+        fun reloadPlugins(msg:String?){
             pluginsScope.launch {
                 apkPlugins.emit(listOf())
                 webPlugins.emit(listOf())
-                pluginInit()
+                pluginInit(msg)
+            }
+        }
+
+        fun unInstallPlugin(id:String, callBack:suspend ()->Unit = {}){
+            pluginsScope.launch (Dispatchers.IO){
+                File(pluginsPathForApk,"plugin_${id}").let {
+                    if(it.exists()){
+                        it.deleteRecursively()
+                    }
+                }
+                File(pluginsPathForWeb,"plugin_${id}").let {
+                    if(it.exists()){
+                        it.deleteRecursively()
+                    }
+                }
+                reloadPlugins(msg = "重载插件")
+                callBack.invoke()
             }
         }
 
@@ -77,16 +96,11 @@ class FuuApplication: Application() {
             FuuDatabase::class.java,
             "fuu"
         ).build()
-        this.let {
-            Log.d("start","_______________")
-            val intent = Intent(applicationContext, PluginDownloadService::class.java)
-            startService(intent)
-            Log.d("end","_______________")
-        }
+
         pluginsPathForApk = "${applicationContext.dataDir}/plugins_apk"
         pluginsPathForWeb = "${applicationContext.dataDir}/plugins_web"
         pluginDirMake()
-        pluginsScope.pluginInit()
+        pluginsScope.pluginInit(null)
         QbSdk.initX5Environment(this, object : PreInitCallback {
             override fun onCoreInitFinished() {
             }
@@ -127,12 +141,12 @@ class FuuApplication: Application() {
     }
 }
 
-fun CoroutineScope.pluginInit(){
+fun CoroutineScope.pluginInit(msg:String?){
     launch (Dispatchers.IO){
         FuuApplication.isApkPluginsLoading.value = true
         FuuApplication.isWebPluginsLoading.value = true
-        withContext(Dispatchers.Main){
-            normalToast("正在加载插件")
+        msg?.let{
+            toastInSuspend(it)
         }
         loadApkPlugin()
         loadWebPlugin()
@@ -163,9 +177,9 @@ private fun CoroutineScope.loadApkPlugin(){
                     developer = null,
                     id = null
                 ),
-                markdown = null
+                markdown = null,
             )
-            val packageName = "com.example.plugin"+"."
+            val packageName = "com.example.testplugin"+"."
             try {
                 PluginManager.loadPlugin(FuuApplication.instance, file)
                 val composeProxyClassName = "ComposeProxy"
@@ -180,6 +194,7 @@ private fun CoroutineScope.loadApkPlugin(){
                 plugin.composeMethod = getContent1Method
                 plugin.pluginObject = obj
             }catch (e:Exception){
+                Log.e("FuuApplication","loadApkPlugin: ${e.message}")
                 plugin.state = PluginState.ERROR
             }
             try {
@@ -191,13 +206,15 @@ private fun CoroutineScope.loadApkPlugin(){
                     throw Exception()
                 }
             }catch (e:Exception) {
+                Log.e("FuuApplication","loadApkPlugin: ${e.message}")
                 plugin.state = PluginState.ERROR
             }
             try {
                 val pluginConfigFile = File(file,"plugin.json")
-                val config = loadJson(pluginConfigFile)
+                val config = loadJson<PluginConfig.ApkPluginConfig>(pluginConfigFile)
                 plugin.pluginConfig = config
             }catch (e:Exception) {
+                Log.e("FuuApplication","loadApkPlugin: ${e.message}")
                 plugin.state = PluginState.ERROR
             }
             try {
@@ -205,6 +222,7 @@ private fun CoroutineScope.loadApkPlugin(){
                 val markdown = loadMarkDown(markdownFile)
                 plugin.markdown = markdown
             }catch (e:Exception) {
+                Log.e("FuuApplication","loadApkPlugin: ${e.message}")
                 plugin.state = PluginState.ERROR
             }
             apkPlugins.add(plugin)
@@ -225,7 +243,7 @@ private fun CoroutineScope.loadWebPlugin(){
         FuuApplication.isApkPluginsLoading.value = true
         return
     }
-    files.forEachIndexed{ index, file ->
+    files.forEachIndexed{ _, file ->
         launch (Dispatchers.IO){
             val plugin = Plugin.WebPlugin(
                 iconPath = null,

@@ -8,23 +8,21 @@ interface Plugin{
     var state: PluginState
     var markdown:String?
     var pluginConfig:PluginConfig
-
     data class ApkPlugin(
         override var iconPath: String?,
         override var state: PluginState,
         var composeMethod: Method?,
         var pluginObject: Any?,
         override var pluginConfig:PluginConfig,
-        override var markdown:String?
+        override var markdown:String?,
     ):Plugin
-
     data class WebPlugin(
         override var iconPath: String?,
         override var state: PluginState,
         var url: String?,
         var pluginObject: Any?,
         override var pluginConfig:PluginConfig,
-        override var markdown:String?
+        override var markdown:String?,
     ):Plugin
 }
 

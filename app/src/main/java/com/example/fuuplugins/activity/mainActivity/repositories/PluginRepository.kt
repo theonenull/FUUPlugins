@@ -96,4 +96,4 @@ object PluginRepository : BaseRepository(){
     }
 }
 
-val test_server ="http://10.133.47.154:8181/"
+val test_server ="http://10.133.67.138:8181/"

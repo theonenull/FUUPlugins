@@ -18,7 +18,7 @@ class StartPageViewModel(
 ) : ViewModel() {
     var currentPage = MutableStateFlow(StartPageShowType.Loading)
 
-    var markDownContext = MutableStateFlow("")
+    private var markDownContext = MutableStateFlow("")
 
     var imageUrl = MutableStateFlow("")
 

@@ -17,6 +17,8 @@ import androidx.core.app.NotificationManagerCompat
 import com.example.fuuplugins.FuuApplication
 import com.example.fuuplugins.R
 import com.example.fuuplugins.activity.mainActivity.repositories.PluginRepository.downloadPlugin
+import com.example.fuuplugins.util.ZIP.unZipFolder
+import com.example.fuuplugins.util.collectWithError
 import com.example.fuuplugins.util.info
 import com.tencent.smtt.sdk.stat.MttLoader.CHANNEL_ID
 import kotlinx.coroutines.CoroutineScope
@@ -79,35 +81,50 @@ class PluginDownloadService : Service(){
             scope.launch(Dispatchers.IO){
                 startCallBack()
                 downloadPlugin(id)
-                    .collect { responseBodyResponse ->
+                    .collectWithError { responseBodyResponse ->
                         try {
                             if (!responseBodyResponse.isSuccessful) {
-                                return@collect
+                                return@collectWithError
                             }
-                            val data = responseBodyResponse.body() ?: return@collect
+                            val data = responseBodyResponse.body() ?: return@collectWithError
                             val isApk = responseBodyResponse.headers()["type"] == "apk"
+                            val path = if (isApk) FuuApplication.pluginsPathForApk else FuuApplication.pluginsPathForWeb
                             val file =
-                                File(if (isApk) FuuApplication.pluginsPathForApk else FuuApplication.pluginsPathForWeb,"plugin_${id}.zip")
+                                File(path,"plugin_${id}.zip")
+                            file.delete()
                             saveToFile(data, file = file) {
-                                if(it >= 95){
+                                if(it == 100){
                                     builder.setContentText("下载完成")
                                         .setProgress(0, 0, false)
-
+                                    val unZipDir = "${path}/plugin_${id}"
+                                    if(File(unZipDir).exists()){
+                                        File(unZipDir).deleteRecursively()
+                                        File(unZipDir).mkdirs()
+                                    }else{
+                                        File(unZipDir).mkdirs()
+                                    }
+                                    unZipFolder("${path}/plugin_${id}.zip",unZipDir)
+                                    file.delete()
+                                    withContext(Dispatchers.Main){
+                                        Toast.makeText(FuuApplication.instance,"下载成功",Toast.LENGTH_SHORT).show()
+                                    }
                                     endCallBack()
                                 }else{
-                                    builder.setContentText("下载完成")
+                                    builder.setContentText("下载中")
                                         .setProgress(100, it, false)
                                 }
                                 notificationManager.notify(notificationId, builder.build())
                             }
-                        } catch (e: Exception) {
+                        }
+                        catch (e: Exception) {
                             Log.e("download",e.toString())
                             errorCallBack(e)
                             notificationManager.cancel(notificationId)
                             withContext(Dispatchers.Main){
-                                Toast.makeText(FuuApplication.instance,"下載失敗",Toast.LENGTH_SHORT).show()
-
+                                Toast.makeText(FuuApplication.instance,"下载失败",Toast.LENGTH_SHORT).show()
                             }
+                        }finally {
+                            FuuApplication.reloadPlugins(null)
                         }
                         this@PluginDownloadService.stopSelf()
                     }
@@ -160,7 +177,7 @@ private inline fun saveToFile(responseBody: ResponseBody, file: File, progressLi
             output.write(buffer, 0, bytes)
             bytesCopied += bytes
             bytes = input.read(buffer)
-            val progress = (bytesCopied * 100.0 / total).toInt()
+            val progress = (bytesCopied * 100 / total).toInt()
             if (progress - emittedProgress >= 0) {
                 progressListener(progress)
                 emittedProgress = progress

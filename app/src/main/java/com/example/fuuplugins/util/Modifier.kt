@@ -1,6 +1,7 @@
 package com.example.fuuplugins.util
 
 import android.provider.ContactsContract.Data
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,18 +52,21 @@ fun <T>ShowUiWithNetworkResult(
     loadingUi:@Composable ()->Unit= {},
     successUi:@Composable (data:T)->Unit = {},
 ) {
-    when(data){
-        is NetworkResult.UNLOAD -> {
-            unloadUi()
+    Crossfade(data, label = ""){
+        when(it){
+            is NetworkResult.UNLOAD -> {
+                unloadUi()
+            }
+            is NetworkResult.ERROR<T> -> {
+                errorUi(it.error)
+            }
+            is NetworkResult.LOADING->{
+                loadingUi()
+            }
+            is NetworkResult.SUCCESS<T>->{
+                successUi(it.data)
+            }
         }
-        is NetworkResult.ERROR<T> -> {
-            errorUi(data.error)
-        }
-        is NetworkResult.LOADING->{
-            loadingUi()
-        }
-        is NetworkResult.SUCCESS<T>->{
-            successUi(data.data)
-        }
+
     }
 }

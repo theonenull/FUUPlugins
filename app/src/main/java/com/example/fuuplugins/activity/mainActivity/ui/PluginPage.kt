@@ -34,6 +34,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -42,9 +45,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,7 +80,10 @@ import com.example.fuuplugins.plugin.PluginState
 import com.example.fuuplugins.util.NetworkResult
 import com.example.fuuplugins.util.ShowUiWithNetworkResult
 import com.example.fuuplugins.util.normalToast
+import com.example.material.ButtonState
+import com.example.material.LoadableButton
 import dev.jeziellago.compose.markdowntext.MarkdownText
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Timer
@@ -113,6 +121,8 @@ fun PluginTool(
         }
     }
 }
+
+class PluginForShow(val showPlugin:Plugin,val remove : ()->Unit)
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -197,10 +207,32 @@ private fun Carousel(
             }
         },
         errorUi = {
-            Text(text = "加载失败")
+            Box(modifier = modifier){
+                Text(
+                    text = "加载失败",
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                )
+            }
         },
-        unloadUi = { Text(text = "未加载") }, loadingUi = { Text("加载中") },
-
+        unloadUi = {
+            Box(modifier = modifier){
+                Text(
+                    text = "未加载",
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                )
+            }
+        },
+        loadingUi = {
+            Box(modifier = modifier){
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .align(Alignment.Center)
+                )
+            }
+        },
     )
 
 }
@@ -378,7 +410,7 @@ fun PluginAlreadyDownloaded(
         }
         val clickable = FuuApplication.isLoading.collectAsState()
         FloatingActionButton(
-            onClick = { if (!clickable.value) FuuApplication.reloadPlugins() else (Unit) },
+            onClick = { if (!clickable.value) FuuApplication.reloadPlugins(msg = "重载插件") else (Unit) },
             modifier = Modifier
                 .offset(x = (-15).dp, y = (-15).dp)
                 .align(Alignment.BottomEnd)
@@ -473,7 +505,7 @@ fun PluginDialog(
                     contentScale = ContentScale.FillBounds
                 )
                 Text(
-                    text =  if(plugin.pluginConfig.developer!=null) "版本:${plugin.pluginConfig.developer}" else "未知开发者",
+                    text =  if(plugin.pluginConfig.developer!=null) "开发者:${plugin.pluginConfig.developer}" else "未知开发者",
                     modifier = Modifier
                         .weight(1f)
                         .align(Alignment.CenterVertically),
@@ -501,7 +533,7 @@ fun PluginDialog(
                     contentScale = ContentScale.FillBounds
                 )
                 Text(
-                    text =  if(plugin.pluginConfig.version!=null) "开发者:${plugin.pluginConfig.version}" else "未知版本",
+                    text =  if(plugin.pluginConfig.version!=null) "版本:${plugin.pluginConfig.version}" else "未知版本",
                     modifier = Modifier
                         .weight(1f)
                         .align(Alignment.CenterVertically),
@@ -510,6 +542,43 @@ fun PluginDialog(
                     textAlign = TextAlign.Start,
                     fontSize = 13.sp,
                     overflow = TextOverflow.Ellipsis
+                )
+            }
+            var removeButtonState by remember {
+                mutableStateOf(ButtonState.Normal)
+            }
+            Row(
+                modifier = Modifier
+                    .padding(bottom = 10.dp)
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+            ) {
+                LoadableButton(
+                    onClick = {
+                        plugin.pluginConfig.id?.let {
+                            removeButtonState = ButtonState.Loading
+                            FuuApplication.unInstallPlugin(
+                                it,
+                                callBack = {
+                                    delay(2000)
+                                    removeButtonState = ButtonState.Normal
+                                    onDismissRequest()
+                                }
+                            )
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                    normalContent = {
+                        Text(text = "卸载")
+                    },
+                    buttonState = removeButtonState,
+                    loadingContent = {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(10.dp)
+                        )
+                    }
                 )
             }
             plugin.markdown?.let {

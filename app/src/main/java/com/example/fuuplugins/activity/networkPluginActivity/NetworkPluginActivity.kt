@@ -73,7 +73,6 @@ class NetworkPluginActivity : BaseActivity() {
                                     setBackgroundColor(0)
                                     //开启本地文件读取（默认为true，不设置也可以）
                                     allowFileAccess = true
-                                    setJavaScriptEnabled(true)
                                     webChromeClient = webViewChromeClient
                                     setWebViewClient(webViewClient)
                                     setLayerType(View.LAYER_TYPE_HARDWARE, null)
