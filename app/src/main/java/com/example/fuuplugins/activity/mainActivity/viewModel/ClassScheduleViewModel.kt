@@ -95,6 +95,7 @@ class ClassScheduleViewModel:ViewModel() {
     fun refreshInitData(){
         viewModelScope.launch(Dispatchers.IO) {
             currentYear.value = getDataManageDataStore(DataManagePreferencesKey.DATA_MANAGE_CURRENT_ACADEMIC_YEAR, Calendar.getInstance().get(Calendar.YEAR).toString()).first()
+            currentWeek.value = getDataManageDataStore(DataManagePreferencesKey.DATA_MANAGE_CURRENT_WEEK, "1").first().toInt()
             CourseRepository.getWeek()
                 .catchWithMassage {
 

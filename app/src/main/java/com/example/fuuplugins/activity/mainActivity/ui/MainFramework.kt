@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -34,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -76,7 +78,6 @@ fun MainFramework(
             content = {
                 var selectedItem by remember { mutableStateOf(0) }
                 Column {
-
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -127,16 +128,12 @@ fun MainFramework(
                         }
                     }
                     NavigationBar {
-                        ListOfPages.forEachIndexed { index, item ->
+                        ListOfPages.values().forEachIndexed { index, item ->
                             NavigationBarItem(
                                 icon = {
-                                    when(index){
-                                        0 -> Icon(Icons.Filled.DateRange, contentDescription = item)
-                                        1 -> Icon(Icons.Filled.Share, contentDescription = item)
-                                        2 -> Icon(Icons.Filled.Favorite, contentDescription = item)
-                                    }
+                                    Icon(imageVector = item.icon, contentDescription = "")
                                 },
-                                label = { Text(item) },
+                                label = { Text(item.label) },
                                 selected = selectedItem == index,
                                 onClick = { selectedItem = index }
                             )
@@ -154,4 +151,9 @@ fun MainFrameworkPreview(){
     MainFramework()
 }
 
-val ListOfPages = listOf("课表", "工具箱", "插件中心")
+enum class ListOfPages(val label:String,val icon :ImageVector){
+    Talk("新鲜事",Icons.Filled.ThumbUp),
+    Class("课表",Icons.Filled.DateRange),
+    Plugin("工具",Icons.Filled.Share),
+    Store("更多",Icons.Filled.Favorite)
+}
