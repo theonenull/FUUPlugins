@@ -94,13 +94,14 @@ fun ClassSchedule(
     viewModel: ClassScheduleViewModel = viewModel(),
     openDrawer : ()->Unit = {}
 ){
-    val sidebarSlideState by viewModel.scrollState.collectAsStateWithLifecycle()
+//    val sidebarSlideState = viewModel.scrollState
     val courseDialog by viewModel.courseDialog.collectAsStateWithLifecycle()
     val academicYearSelectsDialogState by viewModel.academicYearSelectsDialogState.collectAsStateWithLifecycle()
     val refreshDialogState by viewModel.refreshDialog.collectAsStateWithLifecycle()
     val refreshDialogVerificationCode = viewModel.refreshDialogVerificationCode.collectAsStateWithLifecycle()
     val yearOptionsBean by viewModel.yearOptions.collectAsStateWithLifecycle(listOf())
-    LaunchedEffect(viewModel.currentWeek){
+    val currentWeek by viewModel.currentWeek.collectAsStateWithLifecycle()
+    LaunchedEffect(currentWeek){
         viewModel.pageState.value.animateScrollToPage(viewModel.currentWeek.value - 1)
     }
     LaunchedEffect(Unit){
@@ -189,7 +190,7 @@ fun ClassSchedule(
                 .wrapContentWidth()
                 .fillMaxHeight()){
                 Sidebar(
-                    sidebarSlideState
+                    viewModel.scrollState
                 )
             }
             HorizontalPager(
@@ -204,7 +205,7 @@ fun ClassSchedule(
                     Row(
                         Modifier
                             .fillMaxSize()
-                            .verticalScroll(sidebarSlideState)
+                            .verticalScroll(viewModel.scrollState)
                     ) {
                         WeekDay.values().forEachIndexed { weekIndex, value ->
                             Column(

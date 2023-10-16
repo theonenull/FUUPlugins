@@ -69,7 +69,7 @@ class ClassScheduleViewModel:ViewModel() {
     var currentWeek = MutableStateFlow<Int>(1)
     val yearOptions = FuuApplication.db.yearOptionsDao().getAll()
 
-    val scrollState = MutableStateFlow<ScrollState>(ScrollState(initial = 0))
+    val scrollState = ScrollState(initial = 0)
     val pageState = MutableStateFlow(PagerState())
     val academicYearSelectsDialogState = MutableStateFlow(false)
     val courseDialog = MutableStateFlow<CourseBean?>(null)
@@ -79,7 +79,6 @@ class ClassScheduleViewModel:ViewModel() {
     val refreshVerificationCodeState  =  MutableStateFlow(WhetherVerificationCode.LOADING)
     val refreshClickAble = MutableStateFlow(true)
     val refreshButtonState = MutableStateFlow(ButtonState.Normal)
-
     val courseForShow = currentYear
         .combine(course){
             currentYear,course -> course.filter {
