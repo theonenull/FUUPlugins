@@ -152,7 +152,7 @@ fun MainFrameworkPreview(){
 }
 
 enum class ListOfPages(val label:String,val icon :ImageVector){
-    Talk("新鲜事",Icons.Filled.ThumbUp),
+//    Talk("新鲜事",Icons.Filled.ThumbUp),
     Class("课表",Icons.Filled.DateRange),
     Plugin("工具",Icons.Filled.Share),
     Store("更多",Icons.Filled.Favorite)
